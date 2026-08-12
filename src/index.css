@@ -1,0 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Martel:wght@400;600;700;800;900&family=Hind:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* Alabaster Theme Default Tokens */
+  --color-bg: #F8F6F1;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #2A2723;
+  --color-text-secondary: #6B6560;
+  --color-accent-primary: #B8873D;
+  --color-accent-secondary: #0E4B3D;
+  --color-success: #2F8F5B;
+  --color-warning: #C97C1F;
+  --color-error: #B23B3B;
+  --color-border: rgba(184, 135, 61, 0.15);
+}
+
+[data-theme="light"] {
+  --color-bg: #F8F6F1;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #2A2723;
+  --color-text-secondary: #6B6560;
+  --color-accent-primary: #B8873D;
+  --color-accent-secondary: #0E4B3D;
+  --color-success: #2F8F5B;
+  --color-warning: #C97C1F;
+  --color-error: #B23B3B;
+  --color-border: rgba(184, 135, 61, 0.15);
+}
+
+[data-theme="snow"] {
+  --color-bg: #FFFFFF;
+  --color-surface: #FBFCFD;
+  --color-text-primary: #1F2124;
+  --color-text-secondary: #6B7178;
+  --color-accent-primary: #B8873D;
+  --color-accent-secondary: #0E4B3D;
+  --color-success: #2F8F5B;
+  --color-warning: #C97C1F;
+  --color-error: #B23B3B;
+  --color-border: rgba(184, 135, 61, 0.12);
+}
+
+[data-theme="dark"] {
+  --color-bg: #1A1815;
+  --color-surface: #242019;
+  --color-text-primary: #F0EDE6;
+  --color-text-secondary: #A69F92;
+  --color-accent-primary: #D4A855;
+  --color-accent-secondary: #2E9B78;
+  --color-success: #4FBB82;
+  --color-warning: #E0954A;
+  --color-error: #E0605C;
+  --color-border: rgba(212, 168, 85, 0.20);
+}
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: "Fraunces", Georgia, Cambria, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-alabaster: var(--color-bg);
+  --color-charcoal: var(--color-text-primary);
+  --color-warmgray: var(--color-text-secondary);
+  --color-antiquegold: var(--color-accent-primary);
+  --color-royalemerald: var(--color-accent-secondary);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
+  --color-border: var(--color-border);
+  
+  --shadow-diffuse: 0 4px 20px -2px rgba(42, 39, 35, 0.05), 0 2px 8px -1px rgba(42, 39, 35, 0.02);
+}
+
+/* Language specific font configurations automatically applied to Hindi and Marathi scripts */
+html[lang="hi"], html[lang="mr"], [lang="hi"], [lang="mr"] {
+  --font-sans: "Hind", "Plus Jakarta Sans", sans-serif !important;
+  --font-serif: "Martel", "Fraunces", serif !important;
+}
+
+/* Numbers must keep Western/IBM Plex Mono */
+html[lang="hi"] .font-mono, html[lang="mr"] .font-mono, [lang="hi"] .font-mono, [lang="mr"] .font-mono {
+  font-family: var(--font-mono) !important;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Theme Override Mappings */
+.bg-white {
+  background-color: var(--color-surface) !important;
+}
+.bg-alabaster {
+  background-color: var(--color-bg) !important;
+}
+.text-charcoal {
+  color: var(--color-text-primary) !important;
+}
+.text-warmgray {
+  color: var(--color-text-secondary) !important;
+}
+.text-antiquegold {
+  color: var(--color-accent-primary) !important;
+}
+.bg-antiquegold {
+  background-color: var(--color-accent-primary) !important;
+}
+.text-royalemerald {
+  color: var(--color-accent-secondary) !important;
+}
+.bg-royalemerald {
+  background-color: var(--color-accent-secondary) !important;
+}
+.border-antiquegold {
+  border-color: var(--color-accent-primary) !important;
+}
+.text-success {
+  color: var(--color-success) !important;
+}
+.bg-success {
+  background-color: var(--color-success) !important;
+}
+.text-warning {
+  color: var(--color-warning) !important;
+}
+.bg-warning {
+  background-color: var(--color-warning) !important;
+}
+.text-error {
+  color: var(--color-error) !important;
+}
+.bg-error {
+  background-color: var(--color-error) !important;
+}
+
+/* Safe borders overriding opaque borders with our custom theme borders */
+.border-\[rgba\(184\2c 135\2c 61\2c 0\.12\)\] {
+  border-color: var(--color-border) !important;
+}
+.border-\[rgba\(184\2c 135\2c 61\2c 0\.15\)\] {
+  border-color: var(--color-border) !important;
+}
+.border-\[rgba\(184\2c 135\2c 61\2c 0\.18\)\] {
+  border-color: var(--color-border) !important;
+}
+.border-\[rgba\(184\2c 135\2c 61\2c 0\.2\)\] {
+  border-color: var(--color-border) !important;
+}
+.border-\[rgba\(184\2c 135\2c 61\2c 0\.15\)\]:hover {
+  border-color: var(--color-accent-primary) !important;
+}
+
+/* Scrollbar customizations */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-primary);
+}

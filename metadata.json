@@ -1,0 +1,6 @@
+{
+  "name": "All India Elevators Company (AIEC)",
+  "description": "Mobile-first elevator aggregator and automated sales, installation, and operations platform owned by Mr. Prashant Vasant Wable.",
+  "requestFramePermissions": ["geolocation", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
