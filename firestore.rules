@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for Role-Based Access Control (RBAC)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return request.auth.token.role != null ? request.auth.token.role : 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) ? 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : 'customer');
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (getUserRole() == 'admin' || request.auth.token.email == 'prashantashwable@gmail.com');
+    }
+
+    function isTechnician() {
+      return isAuthenticated() && (getUserRole() == 'technician' || getUserRole() == 'qc_inspector' || isAdmin());
+    }
+
+    function isSurveyor() {
+      return isAuthenticated() && (getUserRole() == 'surveyor' || isAdmin());
+    }
+
+    function isCustomer() {
+      return isAuthenticated();
+    }
+
+    // 1. Users collection
+    // Users can read their own profile; only Admins can create/modify arbitrary user roles.
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
+    }
+
+    // 2. Elevator Contracts
+    // Customers can ONLY read their own elevator contracts; Admins have full access.
+    match /contracts/{contractId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.customerId == request.auth.uid ||
+        resource.data.customerEmail == request.auth.token.email
+      );
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 3. Site SOPs, Safety Checklists & QC Inspections
+    // Technicians & QC Inspectors can access SOPs assigned to them; Admins have full audit access.
+    match /site_sops/{sopId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.assignedTechnicianId == request.auth.uid ||
+        resource.data.assignedTechnicianEmail == request.auth.token.email
+      );
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.assignedTechnicianId == request.auth.uid
+      );
+      allow create, delete: if isAdmin();
+    }
+
+    // 4. Breakdown Alerts & 24/7 SOS
+    // Customers can report breakdowns for their site; Technicians can read/update assigned alerts; Admins oversee all.
+    match /breakdown_sos/{alertId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.reportedByUserId == request.auth.uid ||
+        resource.data.assignedTechnicianId == request.auth.uid
+      );
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.assignedTechnicianId == request.auth.uid
+      );
+      allow delete: if isAdmin();
+    }
+
+    // 5. Audit Logs Master
+    // STRICT: Master audit logs are read-only to Admin for enterprise compliance.
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated(); // Application server/client logs audit trail
+      allow update, delete: if false;     // Immutable audit trail
+    }
+
+    // 6. Help KB & FAQs
+    // Publicly readable by all authenticated users; writable only by Admin
+    match /help_articles/{articleId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}

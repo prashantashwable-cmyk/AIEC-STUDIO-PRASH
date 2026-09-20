@@ -3,6 +3,8 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
+import { db, schema } from './src/db';
+import { eq, desc } from 'drizzle-orm';
 
 // Load environment variables
 dotenv.config();
@@ -561,6 +563,61 @@ app.post('/api/gemini/bot-simulate', async (req, res) => {
 });
 
 // ==========================================
+// Cloud SQL (PostgreSQL) RBAC Sync & Health Routes
+// ==========================================
+
+// Cloud SQL Database Status
+app.get('/api/db/status', async (req, res) => {
+  try {
+    if (!process.env.SQL_HOST || !process.env.SQL_DB_NAME) {
+      return res.json({ connected: false, message: 'Cloud SQL environment not configured' });
+    }
+    const userCount = await db.select().from(schema.users).limit(1);
+    res.json({ connected: true, region: 'asia-southeast1', engine: 'PostgreSQL 15', sampleCheck: 'ok' });
+  } catch (error: any) {
+    console.error('Database connection error:', error);
+    res.status(500).json({ connected: false, error: 'Database query execution failed' });
+  }
+});
+
+// Contracts endpoint with role filtering
+app.get('/api/db/contracts', async (req, res) => {
+  const userRole = (req.query.role as string) || 'customer';
+  const userId = (req.query.userId as string) || 'cust_01';
+
+  try {
+    if (userRole === 'admin') {
+      const allContracts = await db.select().from(schema.elevatorContracts).orderBy(desc(schema.elevatorContracts.createdAt));
+      return res.json(allContracts);
+    } else {
+      const customerContracts = await db.select().from(schema.elevatorContracts).where(eq(schema.elevatorContracts.customerId, userId));
+      return res.json(customerContracts);
+    }
+  } catch (error: any) {
+    console.error('Error fetching contracts from Cloud SQL:', error);
+    res.status(500).json({ error: 'Failed to retrieve contracts' });
+  }
+});
+
+// SOPs & Safety Inspections with technician filter
+app.get('/api/db/sops', async (req, res) => {
+  const userRole = (req.query.role as string) || 'technician';
+  const userId = (req.query.userId as string) || 'tech_01';
+
+  try {
+    if (userRole === 'admin' || userRole === 'qc_inspector') {
+      const allSops = await db.select().from(schema.siteSopsAndInspections).orderBy(desc(schema.siteSopsAndInspections.createdAt));
+      return res.json(allSops);
+    } else {
+      const techSops = await db.select().from(schema.siteSopsAndInspections).where(eq(schema.siteSopsAndInspections.assignedTechnicianId, userId));
+      return res.json(techSops);
+    }
+  } catch (error: any) {
+    console.error('Error fetching SOPs from Cloud SQL:', error);
+    res.status(500).json({ error: 'Failed to retrieve SOPs' });
+  }
+});
+
 // Dev & Production serving
 // ==========================================
 
