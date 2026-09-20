@@ -2,7 +2,6 @@ import React from 'react';
 import { Sparkles } from 'lucide-react';
 import { User } from '../types';
 import { Card } from '../components/Common';
-import { CustomerDashboard } from '../components/Dashboards';
 import { CustomerHomeDashboardScreen } from '../components/CustomerHomeDashboardScreen';
 import { DealClosureConfirmation } from '../components/DealClosureConfirmation';
 import { DealTermsFinalization } from '../components/DealTermsFinalization';
@@ -31,7 +30,6 @@ export function CustomerRouter({ currentUser, activeTab, setActiveTab, appLangua
               onNavigateTab={(tab, params) => setActiveTab(tab)}
             />
           )}
-          {currentUser.role === 'customer' && activeTab === 'Home' && <CustomerDashboard user={currentUser} />}
           {currentUser.role === 'customer' && activeTab === 'QuotePreview' && (
             <QuotationPreview user={currentUser} />
           )}
