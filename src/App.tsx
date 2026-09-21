@@ -73,7 +73,9 @@ import {
   Zap,
   Gift,
   Database,
-  Info
+  Info,
+  Search,
+  X
 } from 'lucide-react';
 import { useLanguage, translations as appTranslations, Language } from './lib/language';
 import { useTheme } from './lib/theme';
@@ -92,6 +94,8 @@ export default function App() {
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [carouselStep, setCarouselStep] = useState(0);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
+  const [mobileNavSearch, setMobileNavSearch] = useState('');
   const { language: appLanguage, setLanguage: setAppLanguage, t } = useLanguage(currentUser);
   const { theme: appTheme, setTheme: setAppTheme } = useTheme(currentUser);
   const [loginPhone, setLoginPhone] = useState('');
@@ -610,6 +614,8 @@ export default function App() {
     setOtpSent(false);
     setLoginPhone('');
     setOtpCode('');
+    setShowMobileMoreMenu(false);
+    setMobileNavSearch('');
     setOtp6Digits(Array(6).fill(''));
     setLoginEmail('');
     setLoginPassword('');
@@ -915,6 +921,71 @@ export default function App() {
       default:
         return [{ id: 'Home', label: 'Overview', icon: LayoutDashboard }];
     }
+  };
+
+  // Localized nav labels, shared by the desktop sidebar, mobile bottom nav and mobile "More" menu
+  const TAB_LABEL_OVERRIDES: Record<string, { en: string; mr: string; hi: string }> = {
+    Home: { en: 'Overview', mr: 'मुख्य डॅशबोर्ड', hi: 'मुख्य डैशबोर्ड' },
+    LeadAssignment: { en: 'Lead Assignment', mr: 'लीड वाटप', hi: 'लीड असाइनमेंट' },
+    LeadMerge: { en: 'Merge Studio ⛓️', mr: 'विलीनीकरण स्टुडिओ ⛓️', hi: 'विलय स्टूडियो ⛓️' },
+    LeadScoring: { en: 'Lead Scoring 📈', mr: 'लीड स्कोअरिंग 📈', hi: 'लीड स्कोरिंग 📈' },
+    LeadFollowUp: { en: 'Follow-Ups 📅', mr: 'फॉलो-अप नियोजक 📅', hi: 'फॉलो-अप शेड्यूल 📅' },
+    LeadSource: { en: 'Source & Campaigns 📊', mr: 'स्त्रोत व मोहीम 📊', hi: 'स्रोत व अभियान 📊' },
+    LeadLost: { en: 'Disqualify Lead 🚨', mr: 'अयोग्य नियुक्त 🚨', hi: 'अयोग्य घोषित 🚨' },
+    LeadMigrate: { en: 'Bulk Import/Export 📊', mr: 'थोक आयात/निर्यात 📊', hi: 'थोक आयात/निर्यात 📊' },
+    CommTemplates: { en: 'Comm Templates 💬', mr: 'संप्रेषण टेम्पलेट्स 💬', hi: 'संचार टेम्प्लेट 💬' },
+    CommSequences: { en: 'Comm Sequences ⚙️', mr: 'संप्रेषण अनुक्रम ⚙️', hi: 'संचार अनुक्रम ⚙️' },
+    CommWhatsApp: { en: 'WhatsApp Console 💬', mr: 'व्हॉट्सॲप कन्सोल 💬', hi: 'व्हाट्सएप कंसोल 💬' },
+    CommCalls: { en: 'Auto-Dialer & Logs 📞', mr: 'ऑटो-डायल व लॉग्स 📞', hi: 'ऑटो-डायलिर व लॉग्स 📞' },
+    CommSMS: { en: 'SMS Broadcast ✉️', mr: 'एसएमएस ब्रॉडकास्ट ✉️', hi: 'एसएमएस प्रसारण ✉️' },
+    CommBot: { en: 'AI Bot Config 🤖', mr: 'एआय बोट सेटिंग्स 🤖', hi: 'एआई बोट सेटिंग्स 🤖' },
+    CommInbox: { en: 'Reply Inbox 📥', mr: 'उत्तर इनबॉक्स 📥', hi: 'उत्तर इनबॉक्स 📥' },
+    CommCompliance: { en: 'Compliance & DND 🛡️', mr: 'अनुपालन आणि डीएनडी 🛡️', hi: 'अनुपालन और डीएनडी 🛡️' },
+    QuotePreview: { en: 'Quote Preview 👁️', mr: 'कोट पूर्वावलोकन 👁️', hi: 'कोट पूर्वावलोकन 👁️' },
+    QuoteCompare: { en: 'Compare Packages ⚖️', mr: 'पॅकेज तुलना ⚖️', hi: 'पैकेज तुलना ⚖️' },
+    QuoteHistory: { en: 'Quote History ⏳', mr: 'आवृत्ती इतिहास ⏳', hi: 'संस्करण इतिहास ⏳' },
+    QuoteDiscount: { en: 'Discount Approval 🏷️', mr: 'सवलत आणि मंजुरी 🏷️', hi: 'छूट और अनुमोदन 🏷️' },
+    QuoteDelivery: { en: 'E-Delivery Hub 📨', mr: 'ई-वितरण केंद्र 📨', hi: 'ई-वितरण केंद्र 📨' },
+    QuoteAnalytics: { en: 'Quote Win/Loss 📈', mr: 'कोटेशन विश्लेषण 📈', hi: 'कोटेशन विश्लेषण 📈' },
+    QuotePricingRules: { en: 'Pricing & Margin ⚙️', mr: 'किंमत आणि नफा ⚙️', hi: 'मूल्य और मार्जिन ⚙️' },
+    QuoteNegotiationBot: { en: 'Negotiation Bot 🤖', mr: 'ऑटो-नेगोशिएशन बॉट 🤖', hi: 'ऑटो-नेगोशिएशन बोट 🤖' },
+    QuoteNegotiationThread: { en: 'Live Negotiation 💬', mr: 'थेट संभाषण 💬', hi: 'लाइव बातचीत 💬' },
+    QuoteCounterOfferApproval: { en: 'Counter Approvals ⚖️', mr: 'काउंटर मंजुरी ⚖️', hi: 'काउंटर स्वीकृतियां ⚖️' },
+    QuoteDealTermsFinalization: { en: 'Deal Finalization 🤝', mr: 'करार निश्चिती 🤝', hi: 'सौदा फाइनल 🤝' },
+    QuoteDigitalContract: { en: 'Contract Generator 📄', mr: 'करारनामा निर्माता 📄', hi: 'अनुबंध जनरेटर 📄' },
+    QuoteESignature: { en: 'E-Sign Capture ✍️', mr: 'ई-स्वाक्षरी रेकॉर्ड ✍️', hi: 'ई-हस्ताक्षर कैप्चर ✍️' },
+    QuoteDealClosure: { en: 'Deal Closure 🏆', mr: 'सौदा समाप्ती घोषणा 🏆', hi: 'सौदा बंद पुष्टिकरण 🏆' },
+    CommRules: { en: 'Stage Trigger Rules ⚙️', mr: 'स्टेज ट्रिगर नियम ⚙️', hi: 'स्टेज ट्रिगर नियम ⚙️' },
+    CommAnalytics: { en: 'Comm Analytics 📊', mr: 'संप्रेषण विश्लेषण 📊', hi: 'संचार विश्लेषण 📊' },
+    QuoteSpecs: { en: 'Quotation Specs ⚙️', mr: 'कोटेशन तपशील ⚙️', hi: 'कोटेशन विनिर्देश ⚙️' },
+    QuotePricing: { en: 'Cost & Profit 💰', mr: 'खर्च आणि नफा 💰', hi: 'लागत और लाभ 💰' },
+    QuoteBranding: { en: 'Quote Branding 🎨', mr: 'कोट ब्रँडिंग 🎨', hi: 'कोट ब्रांडिंग 🎨' },
+    LiveMap: { en: 'Live Operations', mr: 'थेट ऑपरेशन्स', hi: 'लाइव संचालन' },
+    RouteOpt: { en: 'Route Match 🗺️', mr: 'मार्ग जुळणी 🗺️', hi: 'रूट मैच 🗺️' },
+    SOSDesk: { en: 'SOS Desk 🚨', mr: 'तात्काळ डेस्क 🚨', hi: 'आपातकालीन डेस्क 🚨' },
+    LiveFeed: { en: 'Live Feed', mr: 'थेट फीड', hi: 'लाइव फीड' },
+    SurveyorAudit: { en: 'Surveyor Audit', mr: 'सर्वेक्षक ऑडिट', hi: 'सर्वेक्षक ऑडिट' },
+    TechnicianAudit: { en: 'Technician Audit', mr: 'तंत्रज्ञ ऑडिट', hi: 'तकनीशियन ऑडिट' },
+    Territories: { en: 'Territory Control', mr: 'प्रदेश नियंत्रण', hi: 'क्षेत्र नियंत्रण' },
+    Heatmap: { en: 'Lead Heatmap', mr: 'लीड हीटमॅप', hi: 'लीड हीटमैप' },
+    SiteVerify: { en: 'Geo-Verification', mr: 'भू-पडताळणी', hi: 'भू-सत्यापन' },
+    Funnel: { en: 'Sales Funnel', mr: 'विक्री फनेल', hi: 'बिक्री फ़नल' },
+    RevenueProfit: { en: 'Revenue & Profit', mr: 'महसूल आणि नफा', hi: 'राजस्व और लाभ' },
+    FinancialCashFlow: { en: 'Cash Flow & Aging 💵', mr: 'रोख प्रवाह आणि थकीत 💵', hi: 'नकदी प्रवाह व येन 💵' },
+    AlertsExceptions: { en: 'Exceptions & Alerts ⚠️', mr: 'अलर्ट आणि अपवाद ⚠️', hi: 'अलर्ट और अपवाद ⚠️' },
+    CustomReport: { en: 'Custom Report Builder 📊', mr: 'अहवाल निर्माता 📊', hi: 'रिपोर्ट निर्माता 📊' },
+    Leaderboard: { en: 'Worker Leaderboard 🏆', mr: 'कामगिरी रँकिंग 🏆', hi: 'प्रदर्शन सूचकांक 🏆' },
+    Conversion: { en: 'Region Conversions 📈', mr: 'प्रदेश रूपांतरण 📈', hi: 'क्षेत्र रूपांतरण 📈' },
+    SupplierScorecard: { en: 'Supplier SLA 🏆', mr: 'विक्रेता कामगिरी 🏆', hi: 'आपूर्तिकर्ता स्कोरकार्ड 🏆' },
+    AutomationHealth: { en: 'Automation Health ⚙️', mr: 'स्वयंचलित प्रणाली ⚙️', hi: 'स्वचालन नियंत्रण ⚙️' },
+    Partners: { en: 'Directory', mr: 'भागीदार निर्देशिका', hi: 'भागीदार निर्देशिका' },
+    Settings: { en: 'Control Unit', mr: 'नियंत्रण युनिट', hi: 'नियंत्रण इकाई' },
+  };
+
+  const getTabLabel = (tab: { id: string; label: string }): string => {
+    const override = TAB_LABEL_OVERRIDES[tab.id];
+    if (!override) return tab.label;
+    return override[appLanguage] || override.en;
   };
 
   return (
@@ -2104,66 +2175,7 @@ export default function App() {
                             }`}
                           >
                             <Icon className={`w-4 h-4 ${isSelected ? 'text-royalemerald' : 'text-warmgray'}`} />
-                            <span>{
-                              tab.id === 'Home' ? (appLanguage === 'hi' ? 'मुख्य डैशबोर्ड' : appLanguage === 'mr' ? 'मुख्य डॅशबोर्ड' : 'Overview') :
-                              tab.id === 'LeadAssignment' ? (appLanguage === 'hi' ? 'लीड असाइनमेंट' : appLanguage === 'mr' ? 'लीड वाटप' : 'Lead Assignment') :
-                              tab.id === 'LeadMerge' ? (appLanguage === 'hi' ? 'विलय स्टूडियो ⛓️' : appLanguage === 'mr' ? 'विलीनीकरण स्टुडिओ ⛓️' : 'Merge Studio ⛓️') :
-                              tab.id === 'LeadScoring' ? (appLanguage === 'hi' ? 'लीड स्कोरिंग 📈' : appLanguage === 'mr' ? 'लीड स्कोअरिंग 📈' : 'Lead Scoring 📈') :
-                              tab.id === 'LeadFollowUp' ? (appLanguage === 'hi' ? 'फॉलो-अप शेड्यूल 📅' : appLanguage === 'mr' ? 'फॉलो-अप नियोजक 📅' : 'Follow-Ups 📅') :
-                              tab.id === 'LeadSource' ? (appLanguage === 'hi' ? 'स्रोत व अभियान 📊' : appLanguage === 'mr' ? 'स्त्रोत व मोहीम 📊' : 'Source & Campaigns 📊') :
-                              tab.id === 'LeadLost' ? (appLanguage === 'hi' ? 'अयोग्य घोषित 🚨' : appLanguage === 'mr' ? 'अयोग्य नियुक्त 🚨' : 'Disqualify Lead 🚨') :
-                              tab.id === 'LeadMigrate' ? (appLanguage === 'hi' ? 'थोक आयात/निर्यात 📊' : appLanguage === 'mr' ? 'थोक आयात/निर्यात 📊' : 'Bulk Import/Export 📊') :
-                              tab.id === 'CommTemplates' ? (appLanguage === 'hi' ? 'संचार टेम्प्लेट 💬' : appLanguage === 'mr' ? 'संप्रेषण टेम्पलेट्स 💬' : 'Comm Templates 💬') :
-                              tab.id === 'CommSequences' ? (appLanguage === 'hi' ? 'संचार अनुक्रम ⚙️' : appLanguage === 'mr' ? 'संप्रेषण अनुक्रम ⚙️' : 'Comm Sequences ⚙️') :
-                              tab.id === 'CommWhatsApp' ? (appLanguage === 'hi' ? 'व्हाट्सएप कंसोल 💬' : appLanguage === 'mr' ? 'व्हॉट्सॲप कन्सोल 💬' : 'WhatsApp Console 💬') :
-                              tab.id === 'CommCalls' ? (appLanguage === 'hi' ? 'ऑटो-डायलिर व लॉग्स 📞' : appLanguage === 'mr' ? 'ऑटो-डायल व लॉग्स 📞' : 'Auto-Dialer & Logs 📞') :
-                              tab.id === 'CommSMS' ? (appLanguage === 'hi' ? 'एसएमएस प्रसारण ✉️' : appLanguage === 'mr' ? 'एसएमएस ब्रॉडकास्ट ✉️' : 'SMS Broadcast ✉️') :
-                              tab.id === 'CommBot' ? (appLanguage === 'hi' ? 'एआई बोट सेटिंग्स 🤖' : appLanguage === 'mr' ? 'एआय बोट सेटिंग्स 🤖' : 'AI Bot Config 🤖') :
-                              tab.id === 'CommInbox' ? (appLanguage === 'hi' ? 'उत्तर इनबॉक्स 📥' : appLanguage === 'mr' ? 'उत्तर इनबॉक्स 📥' : 'Reply Inbox 📥') :
-                              tab.id === 'CommCompliance' ? (appLanguage === 'hi' ? 'अनुपालन और डीएनडी 🛡️' : appLanguage === 'mr' ? 'अनुपालन आणि डीएनडी 🛡️' : 'Compliance & DND 🛡️') :
-                              tab.id === 'QuotePreview' ? (appLanguage === 'hi' ? 'कोट पूर्वावलोकन 👁️' : appLanguage === 'mr' ? 'कोट पूर्वावलोकन 👁️' : 'Quote Preview 👁️') :
-                              tab.id === 'QuoteCompare' ? (appLanguage === 'hi' ? 'पैकेज तुलना ⚖️' : appLanguage === 'mr' ? 'पॅकेज तुलना ⚖️' : 'Compare Packages ⚖️') :
-                              tab.id === 'QuoteHistory' ? (appLanguage === 'hi' ? 'संस्करण इतिहास ⏳' : appLanguage === 'mr' ? 'आवृत्ती इतिहास ⏳' : 'Quote History ⏳') :
-                              tab.id === 'QuoteDiscount' ? (appLanguage === 'hi' ? 'छूट और अनुमोदन 🏷️' : appLanguage === 'mr' ? 'सवलत आणि मंजुरी 🏷️' : 'Discount Approval 🏷️') :
-                              tab.id === 'QuoteDelivery' ? (appLanguage === 'hi' ? 'ई-वितरण केंद्र 📨' : appLanguage === 'mr' ? 'ई-वितरण केंद्र 📨' : 'E-Delivery Hub 📨') :
-                              tab.id === 'QuoteAnalytics' ? (appLanguage === 'hi' ? 'कोटेशन विश्लेषण 📈' : appLanguage === 'mr' ? 'कोटेशन विश्लेषण 📈' : 'Quote Win/Loss 📈') :
-                              tab.id === 'QuotePricingRules' ? (appLanguage === 'hi' ? 'मूल्य और मार्जिन ⚙️' : appLanguage === 'mr' ? 'किंमत आणि नफा ⚙️' : 'Pricing & Margin ⚙️') :
-                              tab.id === 'QuoteNegotiationBot' ? (appLanguage === 'hi' ? 'ऑटो-नेगोशिएशन बोट 🤖' : appLanguage === 'mr' ? 'ऑटो-नेगोशिएशन बॉट 🤖' : 'Negotiation Bot 🤖') :
-                              tab.id === 'QuoteNegotiationThread' ? (appLanguage === 'hi' ? 'लाइव बातचीत 💬' : appLanguage === 'mr' ? 'थेट संभाषण 💬' : 'Live Negotiation 💬') :
-                              tab.id === 'QuoteCounterOfferApproval' ? (appLanguage === 'hi' ? 'काउंटर स्वीकृतियां ⚖️' : appLanguage === 'mr' ? 'काउंटर मंजुरी ⚖️' : 'Counter Approvals ⚖️') :
-                              tab.id === 'QuoteDealTermsFinalization' ? (appLanguage === 'hi' ? 'सौदा फाइनल 🤝' : appLanguage === 'mr' ? 'करार निश्चिती 🤝' : 'Deal Finalization 🤝') :
-                              tab.id === 'QuoteDigitalContract' ? (appLanguage === 'hi' ? 'अनुबंध जनरेटर 📄' : appLanguage === 'mr' ? 'करारनामा निर्माता 📄' : 'Contract Generator 📄') :
-                              tab.id === 'QuoteESignature' ? (appLanguage === 'hi' ? 'ई-हस्ताक्षर कैप्चर ✍️' : appLanguage === 'mr' ? 'ई-स्वाक्षरी रेकॉर्ड ✍️' : 'E-Sign Capture ✍️') :
-                              tab.id === 'QuoteDealClosure' ? (appLanguage === 'hi' ? 'सौदा बंद पुष्टिकरण 🏆' : appLanguage === 'mr' ? 'सौदा समाप्ती घोषणा 🏆' : 'Deal Closure 🏆') :
-                              tab.id === 'CommRules' ? (appLanguage === 'hi' ? 'स्टेज ट्रिगर नियम ⚙️' : appLanguage === 'mr' ? 'स्टेज ट्रिगर नियम ⚙️' : 'Stage Trigger Rules ⚙️') :
-                              tab.id === 'CommAnalytics' ? (appLanguage === 'hi' ? 'संचार विश्लेषण 📊' : appLanguage === 'mr' ? 'संप्रेषण विश्लेषण 📊' : 'Comm Analytics 📊') :
-                              tab.id === 'QuoteSpecs' ? (appLanguage === 'hi' ? 'कोटेशन विनिर्देश ⚙️' : appLanguage === 'mr' ? 'कोटेशन तपशील ⚙️' : 'Quotation Specs ⚙️') :
-                              tab.id === 'QuotePricing' ? (appLanguage === 'hi' ? 'लागत और लाभ 💰' : appLanguage === 'mr' ? 'खर्च आणि नफा 💰' : 'Cost & Profit 💰') :
-                           tab.id === 'QuoteBranding' ? (appLanguage === 'hi' ? 'कोट ब्रांडिंग 🎨' : appLanguage === 'mr' ? 'कोट ब्रँडिंग 🎨' : 'Branding 🎨') :
-                           tab.id === 'QuoteBranding' ? (appLanguage === 'hi' ? 'कोट ब्रांडिंग 🎨' : appLanguage === 'mr' ? 'कोट ब्रँडिंग 🎨' : 'Branding 🎨') :
-                              tab.id === 'QuoteBranding' ? (appLanguage === 'hi' ? 'कोट ब्रांडिंग 🎨' : appLanguage === 'mr' ? 'कोट ब्रँडिंग 🎨' : 'Quote Branding 🎨') :
-                              tab.id === 'LiveMap' ? (appLanguage === 'hi' ? 'लाइव संचालन' : appLanguage === 'mr' ? 'थेट ऑपरेशन्स' : 'Live Operations') :
-                              tab.id === 'RouteOpt' ? (appLanguage === 'hi' ? 'रूट मैच 🗺️' : appLanguage === 'mr' ? 'मार्ग जुळणी 🗺️' : 'Route Match 🗺️') :
-                              tab.id === 'SOSDesk' ? (appLanguage === 'hi' ? 'आपातकालीन डेस्क 🚨' : appLanguage === 'mr' ? 'तात्काळ डेस्क 🚨' : 'SOS Desk 🚨') :
-                              tab.id === 'LiveFeed' ? (appLanguage === 'hi' ? 'लाइव फीड' : appLanguage === 'mr' ? 'थेट फीड' : 'Live Feed') :
-                              tab.id === 'SurveyorAudit' ? (appLanguage === 'hi' ? 'सर्वेक्षक ऑडिट' : appLanguage === 'mr' ? 'सर्वेक्षक ऑडिट' : 'Surveyor Audit') :
-                              tab.id === 'TechnicianAudit' ? (appLanguage === 'hi' ? 'तकनीशियन ऑडिट' : appLanguage === 'mr' ? 'तंत्रज्ञ ऑडिट' : 'Technician Audit') :
-                              tab.id === 'Territories' ? (appLanguage === 'hi' ? 'क्षेत्र नियंत्रण' : appLanguage === 'mr' ? 'प्रदेश नियंत्रण' : 'Territory Control') :
-                              tab.id === 'Heatmap' ? (appLanguage === 'hi' ? 'लीड हीटमैप' : appLanguage === 'mr' ? 'लीड हीटमॅप' : 'Lead Heatmap') :
-                              tab.id === 'SiteVerify' ? (appLanguage === 'hi' ? 'भू-सत्यापन' : appLanguage === 'mr' ? 'भू-पडताळणी' : 'Geo-Verification') :
-                              tab.id === 'Funnel' ? (appLanguage === 'hi' ? 'बिक्री फ़नल' : appLanguage === 'mr' ? 'विक्री फनेल' : 'Sales Funnel') :
-                              tab.id === 'RevenueProfit' ? (appLanguage === 'hi' ? 'राजस्व और लाभ' : appLanguage === 'mr' ? 'महसूल आणि नफा' : 'Revenue & Profit') :
-                              tab.id === 'FinancialCashFlow' ? (appLanguage === 'hi' ? 'नकदी प्रवाह व येन 💵' : appLanguage === 'mr' ? 'रोख प्रवाह आणि थकीत 💵' : 'Cash Flow & Aging 💵') :
-                              tab.id === 'AlertsExceptions' ? (appLanguage === 'hi' ? 'अलर्ट और अपवाद ⚠️' : appLanguage === 'mr' ? 'अलर्ट आणि अपवाद ⚠️' : 'Exceptions & Alerts ⚠️') :
-                              tab.id === 'CustomReport' ? (appLanguage === 'hi' ? 'रिपोर्ट निर्माता 📊' : appLanguage === 'mr' ? 'अहवाल निर्माता 📊' : 'Custom Report Builder 📊') :
-                              tab.id === 'Leaderboard' ? (appLanguage === 'hi' ? 'प्रदर्शन सूचकांक 🏆' : appLanguage === 'mr' ? 'कामगिरी रँकिंग 🏆' : 'Worker Leaderboard 🏆') :
-                              tab.id === 'Conversion' ? (appLanguage === 'hi' ? 'क्षेत्र रूपांतरण 📈' : appLanguage === 'mr' ? 'प्रदेश रूपांतरण 📈' : 'Region Conversions 📈') :
-                              tab.id === 'SupplierScorecard' ? (appLanguage === 'hi' ? 'आपूर्तिकर्ता स्कोरकार्ड 🏆' : appLanguage === 'mr' ? 'विक्रेता कामगिरी 🏆' : 'Supplier SLA 🏆') :
-                              tab.id === 'AutomationHealth' ? (appLanguage === 'hi' ? 'स्वचालन नियंत्रण ⚙️' : appLanguage === 'mr' ? 'स्वयंचलित प्रणाली ⚙️' : 'Automation Health ⚙️') :
-                              tab.id === 'Partners' ? (appLanguage === 'hi' ? 'भागीदार निर्देशिका' : appLanguage === 'mr' ? 'भागीदार निर्देशिका' : 'Directory') :
-                              tab.id === 'Settings' ? (appLanguage === 'hi' ? 'नियंत्रण इकाई' : appLanguage === 'mr' ? 'नियंत्रण युनिट' : 'Control Unit') :
-                              tab.label
-                            }</span>
+                            <span>{getTabLabel(tab)}</span>
                           </button>
                         );
                       })}
@@ -2231,69 +2243,109 @@ export default function App() {
                   {renderTabContent()}
                 </main>
 
-                {/* 4. MOBILE BOTTOM TAB NAVIGATION */}
-                <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[rgba(184,135,61,0.12)] py-2 flex justify-around items-center z-40 shadow-lg">
-                  {getTabsByRole(currentUser.role).map((tab) => {
-                    const Icon = tab.icon;
-                    const isSelected = activeTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                          isSelected ? 'text-royalemerald scale-110' : 'text-warmgray'
-                        }`}
+                {/* 4. MOBILE BOTTOM TAB NAVIGATION (curated primary tabs + "More" for everything else) */}
+                {(() => {
+                  const allTabs = getTabsByRole(currentUser.role);
+                  const needsMore = allTabs.length > 5;
+                  const primaryTabs = needsMore ? allTabs.slice(0, 4) : allTabs;
+                  return (
+                    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[rgba(184,135,61,0.12)] py-2 flex justify-around items-center z-40 shadow-lg">
+                      {primaryTabs.map((tab) => {
+                        const Icon = tab.icon;
+                        const isSelected = activeTab === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex flex-col items-center gap-1 cursor-pointer transition-all min-w-0 px-1 ${
+                              isSelected ? 'text-royalemerald scale-110' : 'text-warmgray'
+                            }`}
+                          >
+                            <Icon className="w-5 h-5 shrink-0" />
+                            <span className="text-[9px] font-bold truncate max-w-[64px]">{getTabLabel(tab)}</span>
+                          </button>
+                        );
+                      })}
+                      {needsMore && (
+                        <button
+                          onClick={() => setShowMobileMoreMenu(true)}
+                          className={`flex flex-col items-center gap-1 cursor-pointer transition-all min-w-0 px-1 ${
+                            showMobileMoreMenu || !primaryTabs.some(t => t.id === activeTab) ? 'text-royalemerald' : 'text-warmgray'
+                          }`}
+                        >
+                          <Grid className="w-5 h-5 shrink-0" />
+                          <span className="text-[9px] font-bold">More</span>
+                        </button>
+                      )}
+                    </nav>
+                  );
+                })()}
+
+                {/* 5. MOBILE "MORE" MENU — every screen for this role, searchable (bottom nav can't hold 100+ items) */}
+                <AnimatePresence>
+                  {showMobileMoreMenu && (
+                    <>
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => { setShowMobileMoreMenu(false); setMobileNavSearch(''); }}
+                        className="md:hidden fixed inset-0 z-[110] bg-charcoal/30 backdrop-blur-xs"
+                      />
+                      <motion.div
+                        initial={{ y: '100%' }}
+                        animate={{ y: 0 }}
+                        exit={{ y: '100%' }}
+                        transition={{ type: 'tween', duration: 0.25 }}
+                        className="md:hidden fixed inset-x-0 bottom-0 z-[111] bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[80vh]"
                       >
-                        <Icon className="w-5 h-5" />
-                        <span className="text-[9px] font-bold">{
-                          tab.id === 'Home' ? (appLanguage === 'hi' ? 'मुख्य डैशबोर्ड' : appLanguage === 'mr' ? 'मुख्य डॅशबोर्ड' : 'Overview') :
-                          tab.id === 'LeadFollowUp' ? (appLanguage === 'hi' ? 'फॉलो-अप 📅' : appLanguage === 'mr' ? 'फॉलो-अप 📅' : 'Follow-Ups 📅') :
-                          tab.id === 'LeadSource' ? (appLanguage === 'hi' ? 'स्रोत व अभियान' : appLanguage === 'mr' ? 'स्त्रोत व मोहीम' : 'Attribution 📊') :
-                          tab.id === 'LeadLost' ? (appLanguage === 'hi' ? 'अयोग्य 🚨' : appLanguage === 'mr' ? 'अयोग्य 🚨' : 'Disqualify 🚨') :
-                          tab.id === 'LeadMigrate' ? (appLanguage === 'hi' ? 'थोक माइग्रेट 📊' : appLanguage === 'mr' ? 'थोक स्थलांतर 📊' : 'Migration 📊') :
-                          tab.id === 'CommTemplates' ? (appLanguage === 'hi' ? 'टेम्प्लेट 💬' : appLanguage === 'mr' ? 'टेम्पलेट्स 💬' : 'Templates 💬') :
-                          tab.id === 'CommSequences' ? (appLanguage === 'hi' ? 'अनुक्रम ⚙️' : appLanguage === 'mr' ? 'अनुक्रम ⚙️' : 'Sequences ⚙️') :
-                          tab.id === 'CommWhatsApp' ? (appLanguage === 'hi' ? 'व्हाट्सएप 💬' : appLanguage === 'mr' ? 'व्हॉट्सॲप 💬' : 'WhatsApp 💬') :
-                          tab.id === 'CommCalls' ? (appLanguage === 'hi' ? 'कॉल लॉग्स 📞' : appLanguage === 'mr' ? 'कॉल लॉग्स 📞' : 'Call Logs 📞') :
-                          tab.id === 'CommSMS' ? (appLanguage === 'hi' ? 'एसएमएस ✉️' : appLanguage === 'mr' ? 'एसएमएस ✉️' : 'SMS ✉️') :
-                          tab.id === 'CommBot' ? (appLanguage === 'hi' ? 'एआई बोट 🤖' : appLanguage === 'mr' ? 'एआय बोट 🤖' : 'AI Bot 🤖') :
-                          tab.id === 'CommInbox' ? (appLanguage === 'hi' ? 'इनबॉक्स 📥' : appLanguage === 'mr' ? 'इनबॉक्स 📥' : 'Inbox 📥') :
-                          tab.id === 'CommCompliance' ? (appLanguage === 'hi' ? 'अनुपालन 🛡️' : appLanguage === 'mr' ? 'अनुपालन 🛡️' : 'Compliance 🛡️') :
-                          tab.id === 'CommRules' ? (appLanguage === 'hi' ? 'ट्रिगर नियम ⚙️' : appLanguage === 'mr' ? 'ट्रिगर नियम ⚙️' : 'Rules ⚙️') :
-                          tab.id === 'CommAnalytics' ? (appLanguage === 'hi' ? 'विश्लेषण 📊' : appLanguage === 'mr' ? 'विश्लेषण 📊' : 'Analytics 📊') :
-                          tab.id === 'QuoteSpecs' ? (appLanguage === 'hi' ? 'विनिर्देश ⚙️' : appLanguage === 'mr' ? 'तपशील ⚙️' : 'Specs ⚙️') :
-                          tab.id === 'QuotePricing' ? (appLanguage === 'hi' ? 'लागत और लाभ 💰' : appLanguage === 'mr' ? 'खर्च आणि नफा 💰' : 'Cost & Profit 💰') :
-                          tab.id === 'QuotePreview' ? (appLanguage === 'hi' ? 'कोट पूर्वावलोकन 👁️' : appLanguage === 'mr' ? 'कोट पूर्वावलोकन 👁️' : 'Quote Preview 👁️') :
-                          tab.id === 'QuoteCompare' ? (appLanguage === 'hi' ? 'तुलना ⚖️' : appLanguage === 'mr' ? 'तुलना ⚖️' : 'Compare ⚖️') :
-                          tab.id === 'QuoteHistory' ? (appLanguage === 'hi' ? 'इतिहास ⏳' : appLanguage === 'mr' ? 'इतिहास ⏳' : 'History ⏳') :
-                          tab.id === 'QuoteDiscount' ? (appLanguage === 'hi' ? 'छूट 🏷️' : appLanguage === 'mr' ? 'सवलत 🏷️' : 'Discount 🏷️') :
-                          tab.id === 'QuoteDelivery' ? (appLanguage === 'hi' ? 'ई-वितरण 📨' : appLanguage === 'mr' ? 'ई-वितरण 📨' : 'E-Delivery 📨') :
-                          tab.id === 'QuoteAnalytics' ? (appLanguage === 'hi' ? 'विश्लेषण 📈' : appLanguage === 'mr' ? 'विश्लेषण 📈' : 'Analytics 📈') :
-                          tab.id === 'QuotePricingRules' ? (appLanguage === 'hi' ? 'मूल्य नियम ⚙️' : appLanguage === 'mr' ? 'किंमत नियम ⚙️' : 'Pricing Rules ⚙️') :
-                          tab.id === 'LiveMap' ? (appLanguage === 'hi' ? 'लाइव संचालन' : appLanguage === 'mr' ? 'थेट ऑपरेशन्स' : 'Live Operations') :
-                          tab.id === 'RouteOpt' ? (appLanguage === 'hi' ? 'रूट मैच 🗺️' : appLanguage === 'mr' ? 'मार्ग जुळणी 🗺️' : 'Route Match 🗺️') :
-                          tab.id === 'SOSDesk' ? (appLanguage === 'hi' ? 'आपातकालीन डेस्क 🚨' : appLanguage === 'mr' ? 'तात्काळ डेस्क 🚨' : 'SOS Desk 🚨') :
-                          tab.id === 'LiveFeed' ? (appLanguage === 'hi' ? 'लाइव फीड' : appLanguage === 'mr' ? 'थेट फीड' : 'Live Feed') :
-                          tab.id === 'SurveyorAudit' ? (appLanguage === 'hi' ? 'सर्वेक्षक ऑडिट' : appLanguage === 'mr' ? 'सर्वेक्षक ऑडिट' : 'Surveyor Audit') :
-                          tab.id === 'TechnicianAudit' ? (appLanguage === 'hi' ? 'तकनीशियन ऑडिट' : appLanguage === 'mr' ? 'तंत्रज्ञ ऑडिट' : 'Technician Audit') :
-                          tab.id === 'Territories' ? (appLanguage === 'hi' ? 'क्षेत्र नियंत्रण' : appLanguage === 'mr' ? 'प्रदेश नियंत्रण' : 'Territory Control') :
-                          tab.id === 'Heatmap' ? (appLanguage === 'hi' ? 'लीड हीटमैप' : appLanguage === 'mr' ? 'लीड हीटमॅप' : 'Lead Heatmap') :
-                          tab.id === 'SiteVerify' ? (appLanguage === 'hi' ? 'भू-सत्यापन' : appLanguage === 'mr' ? 'भू-पडताळणी' : 'Geo-Verification') :
-                          tab.id === 'Funnel' ? (appLanguage === 'hi' ? 'बिक्री फ़नल' : appLanguage === 'mr' ? 'विक्री फनेल' : 'Sales Funnel') :
-                          tab.id === 'RevenueProfit' ? (appLanguage === 'hi' ? 'राजस्व और लाभ' : appLanguage === 'mr' ? 'महसूल आणि नफा' : 'Revenue & Profit') :
-                           tab.id === 'FinancialCashFlow' ? (appLanguage === 'hi' ? 'नकदी प्रवाह 💵' : appLanguage === 'mr' ? 'रोख प्रवाह 💵' : 'Cash Flow 💵') :
-                          tab.id === 'Leaderboard' ? (appLanguage === 'hi' ? 'प्रदर्शन सूचकांक' : appLanguage === 'mr' ? 'कामगिरी रँकिंग' : 'Performance') :
-                          tab.id === 'Conversion' ? (appLanguage === 'hi' ? 'रूपांतरण 📈' : appLanguage === 'mr' ? 'रूपांतरण 📈' : 'Conversions 📈') :
-                          tab.id === 'SupplierScorecard' ? (appLanguage === 'hi' ? 'आपूर्तिकर्ता 🏆' : appLanguage === 'mr' ? 'विक्रेता 🏆' : 'Supplier SLA 🏆') :
-                          tab.id === 'AutomationHealth' ? (appLanguage === 'hi' ? 'स्वचालन ⚙️' : appLanguage === 'mr' ? 'ऑटोमेशन ⚙️' : 'Automation ⚙️') :
-                          tab.id === 'Partners' ? (appLanguage === 'hi' ? 'भागीदार निर्देशिका' : appLanguage === 'mr' ? 'भागीदार निर्देशिका' : 'Directory') :
-                          tab.id === 'Settings' ? (appLanguage === 'hi' ? 'नियंत्रण इकाई' : appLanguage === 'mr' ? 'नियंत्रण युनिट' : 'Control Unit') :
-                          tab.label
-                        }</span>
-                      </button>
-                    );
-                  })}
-                </nav>
+                        <div className="w-12 h-1.5 bg-[#e5dfd4] rounded-full mx-auto mt-3 mb-2 shrink-0" />
+                        <div className="px-4 pb-3 flex items-center justify-between shrink-0">
+                          <h3 className="font-serif text-base font-bold text-charcoal">All Screens ({getTabsByRole(currentUser.role).length})</h3>
+                          <button onClick={() => { setShowMobileMoreMenu(false); setMobileNavSearch(''); }} className="p-1.5 rounded-lg hover:bg-alabaster text-warmgray">
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                        <div className="px-4 pb-3 shrink-0">
+                          <div className="relative">
+                            <Search className="w-4 h-4 text-warmgray absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input
+                              type="text"
+                              value={mobileNavSearch}
+                              onChange={(e) => setMobileNavSearch(e.target.value)}
+                              placeholder="Search screens..."
+                              className="w-full bg-[#F8F6F1] border border-[rgba(184,135,61,0.15)] rounded-xl pl-9 pr-3 py-2.5 text-sm focus:ring-1 focus:ring-antiquegold focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto px-4 pb-8 grid grid-cols-3 gap-2">
+                          {getTabsByRole(currentUser.role)
+                            .filter(tab => getTabLabel(tab).toLowerCase().includes(mobileNavSearch.toLowerCase()))
+                            .map((tab) => {
+                              const Icon = tab.icon;
+                              const isSelected = activeTab === tab.id;
+                              return (
+                                <button
+                                  key={tab.id}
+                                  onClick={() => {
+                                    setActiveTab(tab.id);
+                                    setShowMobileMoreMenu(false);
+                                    setMobileNavSearch('');
+                                  }}
+                                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl text-center cursor-pointer transition-all ${
+                                    isSelected ? 'bg-[#0E4B3D]/10 text-royalemerald' : 'bg-[#F8F6F1] text-warmgray hover:bg-alabaster'
+                                  }`}
+                                >
+                                  <Icon className={`w-5 h-5 shrink-0 ${isSelected ? 'text-royalemerald' : 'text-warmgray'}`} />
+                                  <span className="text-[10px] font-bold leading-tight line-clamp-2">{getTabLabel(tab)}</span>
+                                </button>
+                              );
+                            })}
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
 
               </div>
             )}

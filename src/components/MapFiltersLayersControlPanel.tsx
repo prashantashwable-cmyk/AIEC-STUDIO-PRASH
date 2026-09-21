@@ -875,14 +875,14 @@ export const MapFiltersLayersControlPanel: React.FC<MapFiltersLayersControlPanel
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="font-serif text-sm font-bold text-charcoal">{view.name}</span>
                               {view.isDefault && (
-                                <Badge variant="primary" className="text-[8px] px-1 py-0 px-1.5 bg-[#FFF5C6] text-[#B8873D] border border-antiquegold/20 font-bold uppercase">
+                                <span className="text-[8px] px-1.5 py-0 rounded-full bg-[#FFF5C6] text-[#B8873D] border border-antiquegold/20 font-bold uppercase tracking-wider">
                                   Default
-                                </Badge>
+                                </span>
                               )}
                               {view.isShareable && (
-                                <Badge variant="secondary" className="text-[8px] px-1.5 bg-blue-50 text-blue-600 border border-blue-200 uppercase font-bold">
+                                <span className="text-[8px] px-1.5 py-0 rounded-full bg-blue-50 text-blue-600 border border-blue-200 uppercase font-bold tracking-wider">
                                   Shared
-                                </Badge>
+                                </span>
                               )}
                             </div>
 
