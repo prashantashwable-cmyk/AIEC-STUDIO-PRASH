@@ -1261,9 +1261,9 @@ export const LeadFollowUpScheduler: React.FC<{ user: CRMUser; onBack?: () => voi
 
                   return (
                     <div key={reason} className="space-y-1">
-                      <div className="flex justify-between text-xs text-charcoal">
-                        <span className="font-semibold truncate max-w-[200px]">{reason}</span>
-                        <span className="font-mono font-black">{count} logs ({percentage}%)</span>
+                      <div className="flex justify-between gap-2 text-xs text-charcoal">
+                        <span className="font-semibold truncate max-w-[200px] min-w-0">{reason}</span>
+                        <span className="font-mono font-black shrink-0">{count} logs ({percentage}%)</span>
                       </div>
                       
                       <div className="h-1.5 w-full bg-alabaster rounded-full overflow-hidden">

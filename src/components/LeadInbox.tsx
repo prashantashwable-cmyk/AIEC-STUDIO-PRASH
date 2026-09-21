@@ -1327,14 +1327,14 @@ export const LeadInbox: React.FC<{ user: User }> = ({ user }) => {
             >
               
               {/* Header */}
-              <div className="p-5 border-b border-[rgba(184,135,61,0.12)] bg-[#F8F6F1]/70 flex justify-between items-center">
-                <div>
+              <div className="p-5 border-b border-[rgba(184,135,61,0.12)] bg-[#F8F6F1]/70 flex justify-between items-center gap-3">
+                <div className="min-w-0 flex-1">
                   <span className="text-[9px] uppercase font-mono tracking-widest text-antiquegold font-extrabold">{t.sidePanelTitle}</span>
-                  <h3 className="font-serif text-lg font-bold text-charcoal mt-1 truncate max-w-[320px]">{activeLead.contactInfo.name}</h3>
+                  <h3 className="font-serif text-lg font-bold text-charcoal mt-1 truncate">{activeLead.contactInfo.name}</h3>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsSidePanelOpen(false)}
-                  className="w-8 h-8 rounded-full bg-alabaster border border-[rgba(184,135,61,0.12)] flex items-center justify-center text-warmgray hover:text-charcoal font-bold cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-alabaster border border-[rgba(184,135,61,0.12)] flex items-center justify-center text-warmgray hover:text-charcoal font-bold cursor-pointer shrink-0"
                 >
                   ✕
                 </button>
@@ -1435,9 +1435,9 @@ export const LeadInbox: React.FC<{ user: User }> = ({ user }) => {
                       <span className="text-warmgray font-semibold">Contact Phone</span>
                       <span className="font-mono font-bold text-charcoal">{activeLead.contactInfo.phone}</span>
                     </div>
-                    <div className="flex justify-between items-center text-xs py-2.5">
-                      <span className="text-warmgray font-semibold">Email</span>
-                      <span className="font-bold text-charcoal text-right truncate max-w-[180px]">{activeLead.contactInfo.email || "No email"}</span>
+                    <div className="flex justify-between items-center gap-2 text-xs py-2.5">
+                      <span className="text-warmgray font-semibold shrink-0">Email</span>
+                      <span className="font-bold text-charcoal text-right truncate max-w-[180px] min-w-0">{activeLead.contactInfo.email || "No email"}</span>
                     </div>
                     {activeLead.contactInfo.companyName && (
                       <div className="flex justify-between items-center text-xs py-2.5">

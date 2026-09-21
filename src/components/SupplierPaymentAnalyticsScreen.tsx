@@ -373,11 +373,11 @@ export const SupplierPaymentAnalyticsScreen: React.FC<SupplierPaymentAnalyticsSc
                 const percent = Math.round((cat.spendINR / totalCategorySpend) * 100);
                 return (
                   <div key={cat.category} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-[var(--color-text-primary)] truncate max-w-[180px]">
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <span className="font-medium text-[var(--color-text-primary)] truncate max-w-[180px] min-w-0">
                         {cat.category}
                       </span>
-                      <span className="font-mono font-bold text-[var(--color-text-primary)]">
+                      <span className="font-mono font-bold text-[var(--color-text-primary)] shrink-0">
                         ₹{(cat.spendINR / 100000).toFixed(1)}L ({percent}%)
                       </span>
                     </div>

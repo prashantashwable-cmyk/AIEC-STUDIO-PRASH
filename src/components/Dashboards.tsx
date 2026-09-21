@@ -1651,22 +1651,22 @@ export const AdminDashboard: React.FC<{ user: User }> = ({ user }) => {
 
             <div className="divide-y divide-[rgba(184,135,61,0.1)]">
               {leads.map((lead) => (
-                <div key={lead.id} className="py-4 flex items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-sm text-charcoal">{lead.contactInfo.name}</h4>
+                <div key={lead.id} className="py-4 flex items-center justify-between gap-2 sm:gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="font-bold text-sm text-charcoal truncate">{lead.contactInfo.name}</h4>
                       <Badge status={lead.stage} />
                     </div>
-                    <p className="text-xs text-warmgray flex items-center gap-1 mt-1">
-                      <MapPin className="w-3.5 h-3.5 text-antiquegold" />
-                      <span className="truncate max-w-[280px]">{lead.buildingInfo.address}</span>
+                    <p className="text-xs text-warmgray flex items-center gap-1 mt-1 min-w-0">
+                      <MapPin className="w-3.5 h-3.5 text-antiquegold shrink-0" />
+                      <span className="truncate">{lead.buildingInfo.address}</span>
                     </p>
-                    <p className="text-[10px] text-warmgray mt-0.5">
+                    <p className="text-[10px] text-warmgray mt-0.5 truncate">
                       Type: {lead.buildingInfo.type} • {lead.buildingInfo.floors} Floors
                     </p>
                   </div>
                   <div className="shrink-0 flex items-center gap-2">
-                    <span className="text-[10px] font-bold font-mono px-2 py-1 bg-alabaster text-warmgray rounded">
+                    <span className="hidden sm:inline-flex text-[10px] font-bold font-mono px-2 py-1 bg-alabaster text-warmgray rounded">
                       ID: {lead.id}
                     </span>
                     <ChevronRight className="w-4 h-4 text-warmgray" />
@@ -3383,7 +3383,7 @@ export const SurveyorDashboard: React.FC<{ user: User }> = ({ user }) => {
                             }`}
                           >
                             <div className="flex justify-between items-start gap-3">
-                              <div>
+                              <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
                                   <h4 className="font-bold text-sm text-charcoal">{task.contactName}</h4>
                                   <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
@@ -3398,12 +3398,12 @@ export const SurveyorDashboard: React.FC<{ user: User }> = ({ user }) => {
                                   )}
                                 </div>
                                 <p className="text-xs text-charcoal font-medium mt-0.5">{task.projectName}</p>
-                                <p className="text-xs text-warmgray flex items-center gap-1 mt-1 font-sans">
+                                <p className="text-xs text-warmgray flex items-center gap-1 mt-1 font-sans min-w-0">
                                   <MapPin className="w-3.5 h-3.5 text-antiquegold shrink-0" />
-                                  <span className="truncate max-w-[280px]">{task.address}</span>
+                                  <span className="truncate">{task.address}</span>
                                 </p>
                               </div>
-                              <span className="font-mono text-xs font-bold text-charcoal bg-white border border-border px-2 py-1 rounded-lg">
+                              <span className="font-mono text-xs font-bold text-charcoal bg-white border border-border px-2 py-1 rounded-lg shrink-0">
                                 {task.dueTimeText}
                               </span>
                             </div>
@@ -7448,8 +7448,8 @@ export const SurveyorDashboard: React.FC<{ user: User }> = ({ user }) => {
 
                       {sitePhotos.front ? (
                         <div className="mt-3.5 flex gap-4 items-center">
-                          <img src={sitePhotos.front.dataUrl} className="w-32 h-20 object-cover rounded-xl border border-border" alt="Front view watermark draft" />
-                          <div className="space-y-1 text-[10px] font-mono text-warmgray">
+                          <img src={sitePhotos.front.dataUrl} className="w-32 h-20 object-cover rounded-xl border border-border shrink-0" alt="Front view watermark draft" />
+                          <div className="space-y-1 text-[10px] font-mono text-warmgray min-w-0">
                             <p className="text-charcoal font-bold flex items-center gap-1">
                               {sitePhotos.front.isLive ? <span className="text-success">🟢 Secure Live Shutter</span> : <span className="text-error">⚠️ Imported Non-Live File</span>}
                             </p>
@@ -7518,8 +7518,8 @@ export const SurveyorDashboard: React.FC<{ user: User }> = ({ user }) => {
 
                       {sitePhotos.entrance ? (
                         <div className="mt-3.5 flex gap-4 items-center">
-                          <img src={sitePhotos.entrance.dataUrl} className="w-32 h-20 object-cover rounded-xl border border-border" alt="Entrance watermarked draft" />
-                          <div className="space-y-1 text-[10px] font-mono text-warmgray">
+                          <img src={sitePhotos.entrance.dataUrl} className="w-32 h-20 object-cover rounded-xl border border-border shrink-0" alt="Entrance watermarked draft" />
+                          <div className="space-y-1 text-[10px] font-mono text-warmgray min-w-0">
                             <p className="text-charcoal font-bold flex items-center gap-1">
                               {sitePhotos.entrance.isLive ? <span className="text-success">🟢 Secure Live Shutter</span> : <span className="text-error">⚠️ Imported Non-Live File</span>}
                             </p>
@@ -7588,8 +7588,8 @@ export const SurveyorDashboard: React.FC<{ user: User }> = ({ user }) => {
 
                       {sitePhotos.landmark ? (
                         <div className="mt-3.5 flex gap-4 items-center">
-                          <img src={sitePhotos.landmark.dataUrl} className="w-32 h-20 object-cover rounded-xl border border-border" alt="Landmark watermarked draft" />
-                          <div className="space-y-1 text-[10px] font-mono text-warmgray">
+                          <img src={sitePhotos.landmark.dataUrl} className="w-32 h-20 object-cover rounded-xl border border-border shrink-0" alt="Landmark watermarked draft" />
+                          <div className="space-y-1 text-[10px] font-mono text-warmgray min-w-0">
                             <p className="text-charcoal font-bold flex items-center gap-1">
                               {sitePhotos.landmark.isLive ? <span className="text-success">🟢 Secure Live Shutter</span> : <span className="text-error">⚠️ Imported Non-Live File</span>}
                             </p>

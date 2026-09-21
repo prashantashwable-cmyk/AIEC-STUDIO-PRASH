@@ -1,32 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  APIProvider, 
-  Map, 
-  AdvancedMarker, 
-  useMap 
-} from '@vis.gl/react-google-maps';
-import { 
-  MapPin, Users, Layers, Plus, X, Check, Settings, AlertTriangle, 
-  Globe, Sparkles, Compass, Trash2, Edit3, Save, Award, Activity, 
-  Info, ArrowRight, ChevronRight, RefreshCw, UserCheck, Minimize2, CheckCircle2
+import { MapContainer, TileLayer, Marker, Polygon, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import {
+  MapPin, Users, Layers, Plus, X, Check, Settings, AlertTriangle,
+  Globe, Sparkles, Compass, Trash2, Edit3, Save, Award, Activity,
+  Info, ArrowRight, ChevronRight, RefreshCw, UserCheck, Minimize2, Maximize2, CheckCircle2
 } from 'lucide-react';
 import { DbManager } from '../lib/db';
 import { User, Territory, Lead } from '../types';
 import { Card, Button } from './Common';
 
-const API_KEY =
-  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-  (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
-  (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
-  '';
-const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
+// Leaflet caches its container size at init; toggling fullscreen resizes the container
+// via CSS without firing a window resize event, so we must tell the map explicitly.
+const MapResizeHandler: React.FC<{ trigger: unknown }> = ({ trigger }) => {
+  const map = useMap();
+  useEffect(() => {
+    const t = setTimeout(() => map.invalidateSize(), 120);
+    return () => clearTimeout(t);
+  }, [trigger, map]);
+  return null;
+};
 
-export const GeofenceTerritoryManagement: React.FC<{ 
+export const GeofenceTerritoryManagement: React.FC<{
   user: User;
   apiKey?: string;
   hasValidKey?: boolean;
-}> = ({ user, apiKey, hasValidKey }) => {
+}> = ({ user }) => {
   // Database data
   const [territories, setTerritories] = useState<Territory[]>([]);
   const [surveyors, setSurveyors] = useState<User[]>([]);
@@ -57,18 +58,20 @@ export const GeofenceTerritoryManagement: React.FC<{
     details?: string;
   } | null>(null);
 
-  // Map settings (Dual mode - defaulted to google)
-  const [mapMode, setMapMode] = useState<'google' | 'vector'>(hasValidKey ? 'google' : 'vector');
-  const [showKeyInfo, setShowKeyInfo] = useState(false);
+  // Map settings: 'street' uses free OpenStreetMap tiles (no key/billing needed)
+  const [mapMode, setMapMode] = useState<'street' | 'vector'>('street');
 
+  // Fullscreen map view (CSS-based overlay, works even where the browser Fullscreen API is blocked, e.g. in an iframe)
+  const [isFullscreen, setIsFullscreen] = useState(false);
   useEffect(() => {
-    if (hasValidKey) {
-      setMapMode('google');
-    } else {
-      setMapMode('vector');
-    }
-  }, [hasValidKey]);
-  
+    if (!isFullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isFullscreen]);
+
   // Vector map panning/zoom state (Pune coordinate space)
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -424,6 +427,26 @@ export const GeofenceTerritoryManagement: React.FC<{
 
   const selectedTerritory = territories.find(t => t.id === selectedTerritoryId);
 
+  // Leaflet divIcon builders (real street map markers, styled to match the vector sandbox pins)
+  const territoryIcon = (t: Territory) => L.divIcon({
+    html: `
+      <div class="flex flex-col items-center cursor-pointer">
+        <div class="w-7 h-7 rounded-full flex items-center justify-center text-white border-2 border-white shadow-md" style="background-color:${t.color || '#0E4B3D'};">🧭</div>
+        <div class="mt-1 px-2 py-0.5 bg-white border border-charcoal/10 rounded-md text-[9px] font-bold shadow-sm whitespace-nowrap">${t.name}</div>
+      </div>
+    `,
+    className: '',
+    iconSize: [28, 44],
+    iconAnchor: [14, 14],
+  });
+
+  const leadDotIcon = L.divIcon({
+    html: `<div class="w-2.5 h-2.5 rounded-full bg-[#2F8F5B] border border-white shadow-sm"></div>`,
+    className: '',
+    iconSize: [10, 10],
+    iconAnchor: [5, 5],
+  });
+
   return (
     <div className="space-y-6 flex flex-col h-full relative font-sans">
       
@@ -501,8 +524,11 @@ export const GeofenceTerritoryManagement: React.FC<{
         {/* ==========================================
             LEFT COLUMN: INTERACTIVE MAP EDITOR
             ========================================== */}
-        <div className="flex-1 h-[500px] sm:h-[550px] lg:h-full rounded-2xl overflow-hidden border border-[rgba(184,135,61,0.2)] bg-white relative flex flex-col shadow-inner min-h-[400px]">
-          
+        <div className={isFullscreen
+          ? "fixed inset-0 z-[200] bg-white flex flex-col"
+          : "flex-1 h-[500px] sm:h-[550px] lg:h-full rounded-2xl overflow-hidden border border-[rgba(184,135,61,0.2)] bg-white relative flex flex-col shadow-inner min-h-[400px]"
+        }>
+
           {/* MAP MODE CONTROLLERS */}
           <div className="absolute top-4 left-4 z-10 flex gap-1 bg-white/95 p-1 rounded-xl backdrop-blur-md shadow-sm border border-[rgba(184,135,61,0.12)]">
             <button
@@ -514,54 +540,24 @@ export const GeofenceTerritoryManagement: React.FC<{
               🗺️ Vector Sandbox
             </button>
             <button
-              onClick={() => {
-                if (!hasValidKey) {
-                  setShowKeyInfo(true);
-                } else {
-                  setMapMode('google');
-                }
-              }}
+              onClick={() => setMapMode('street')}
               className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all flex items-center gap-1 ${
-                mapMode === 'google' ? 'bg-royalemerald text-white' : 'text-warmgray hover:text-charcoal'
+                mapMode === 'street' ? 'bg-royalemerald text-white' : 'text-warmgray hover:text-charcoal'
               }`}
             >
               <Globe className="w-3 h-3" />
-              G-Maps Satellite
+              Live Street Map
             </button>
           </div>
 
-          {/* SATELLITE KEY DIALOG OVERLAY */}
-          {showKeyInfo && (
-            <div className="absolute inset-0 z-30 bg-[#F8F6F1]/95 flex flex-col items-center justify-center p-6 text-center text-charcoal animate-fadeIn">
-              <div className="max-w-md bg-white p-6 rounded-3xl border border-[rgba(184,135,61,0.22)] shadow-2xl space-y-4">
-                <div className="w-12 h-12 bg-[#B8873D]/10 text-[#B8873D] rounded-full flex items-center justify-center mx-auto animate-bounce">
-                  <Globe className="w-6 h-6 stroke-[1.5]" />
-                </div>
-                <h3 className="font-serif text-lg font-bold text-charcoal">Google Maps Platform API Key</h3>
-                <p className="text-xs text-warmgray leading-relaxed">
-                  Real satellite map overlays require registering a Google Maps JavaScript SDK API Key in AI Studio secrets.
-                </p>
-                <div className="bg-[#F8F6F1] p-3 rounded-xl text-left text-[11px] space-y-2 border border-[#e5dfd4] font-mono text-warmgray">
-                  <p className="font-bold text-charcoal">Enter manually under:</p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li>Settings Gear (⚙️ top-right) → Secrets</li>
-                    <li>Name: <code className="bg-white px-1 py-0.5 rounded border font-bold text-royalemerald">GOOGLE_MAPS_PLATFORM_KEY</code></li>
-                  </ul>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="secondary" className="flex-1 py-2 text-xs" onClick={() => setShowKeyInfo(false)}>
-                    <span>Cancel</span>
-                  </Button>
-                  <Button variant="primary" className="flex-1 py-2 text-xs" onClick={() => {
-                    setShowKeyInfo(false);
-                    setMapMode('vector'); // Stay in sandbox
-                  }}>
-                    <span>Simulated mode</span>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* FULLSCREEN TOGGLE */}
+          <button
+            onClick={() => setIsFullscreen(prev => !prev)}
+            title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+            className="absolute top-4 right-4 z-20 p-2 bg-white/95 hover:bg-white rounded-xl backdrop-blur-md shadow-sm border border-[rgba(184,135,61,0.12)] text-charcoal transition-all"
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
 
           {/* ZOOM / PANNERS CONTROLS */}
           <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1.5 bg-white p-1 rounded-xl shadow-md border border-[rgba(184,135,61,0.12)]">
@@ -577,52 +573,56 @@ export const GeofenceTerritoryManagement: React.FC<{
           </div>
 
           {/* =========================================================
-              MAP OPTION A: GOOGLE MAPS
+              MAP OPTION A: REAL STREET MAP (OpenStreetMap, free, no key)
               ========================================================= */}
-          {mapMode === 'google' ? (
+          {mapMode === 'street' ? (
             <div className="absolute inset-0 w-full h-full z-0">
-              {!apiKey ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#FAF9F5] space-y-4">
-                  <div className="w-8 h-8 border-4 border-royalemerald border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs text-warmgray font-medium tracking-wide">Initializing satellite terrain engine...</p>
-                </div>
-              ) : (
-                <Map
-                  defaultCenter={{ lat: mapCenterLat, lng: mapCenterLng }}
-                  defaultZoom={11.5}
-                  mapId="AIEC_HQ_TERRITORY_MAP"
-                  internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
-                  style={{ width: '100%', height: '100%' }}
-                >
-                  {/* Territories represented as Pins/Overlays */}
-                  {territories.map(t => (
-                    <AdvancedMarker
-                      key={`g-t-marker-${t.id}`}
-                      position={{ lat: t.polygonCoordinates[0]?.lat || 18.52, lng: t.polygonCoordinates[0]?.lng || 73.85 }}
-                      onClick={() => setSelectedTerritoryId(t.id)}
-                    >
-                      <div className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform">
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-white border-2 border-white shadow-md" style={{ backgroundColor: t.color || '#0E4B3D' }}>
-                          <Compass className="w-4 h-4" />
-                        </div>
-                        <div className="mt-1 px-2 py-0.5 bg-white border border-charcoal/10 rounded-md text-[9px] font-bold shadow-sm whitespace-nowrap">
-                          {t.name}
-                        </div>
-                      </div>
-                    </AdvancedMarker>
-                  ))}
+              <MapContainer
+                center={[mapCenterLat, mapCenterLng]}
+                zoom={11.5}
+                style={{ width: '100%', height: '100%' }}
+                scrollWheelZoom={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapResizeHandler trigger={isFullscreen} />
 
-                  {/* Active leads represented on satellite */}
-                  {leads.map(l => (
-                    <AdvancedMarker
-                      key={`g-lead-marker-${l.id}`}
-                      position={{ lat: l.buildingInfo.latitude || 18.52, lng: l.buildingInfo.longitude || 73.85 }}
-                    >
-                      <div className="w-3 h-3 rounded-full bg-success border-2 border-white shadow-sm" />
-                    </AdvancedMarker>
-                  ))}
-                </Map>
-              )}
+                {/* Territories rendered as real geo-polygons (an improvement over the old marker-only Google mode) */}
+                {territories.map(t => (
+                  <Polygon
+                    key={`s-poly-${t.id}`}
+                    positions={t.polygonCoordinates.map(p => [p.lat, p.lng] as [number, number])}
+                    pathOptions={{
+                      color: t.color || '#0E4B3D',
+                      weight: selectedTerritoryId === t.id ? 3 : 1.5,
+                      fillColor: t.color || '#0E4B3D',
+                      fillOpacity: selectedTerritoryId === t.id ? 0.3 : 0.15,
+                    }}
+                    eventHandlers={{ click: () => setSelectedTerritoryId(t.id) }}
+                  />
+                ))}
+
+                {/* Territory center markers (name label) */}
+                {territories.map(t => (
+                  <Marker
+                    key={`s-t-marker-${t.id}`}
+                    position={[t.polygonCoordinates[0]?.lat || 18.52, t.polygonCoordinates[0]?.lng || 73.85]}
+                    icon={territoryIcon(t)}
+                    eventHandlers={{ click: () => setSelectedTerritoryId(t.id) }}
+                  />
+                ))}
+
+                {/* Active leads as dots */}
+                {leads.map(l => (
+                  <Marker
+                    key={`s-lead-marker-${l.id}`}
+                    position={[l.buildingInfo.latitude || 18.52, l.buildingInfo.longitude || 73.85]}
+                    icon={leadDotIcon}
+                  />
+                ))}
+              </MapContainer>
             </div>
           ) : (
             

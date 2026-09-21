@@ -998,9 +998,9 @@ export function EmergencyEscalationAlert({ user }: EmergencyEscalationAlertProps
                       </div>
 
                       <div className="text-xs text-charcoal space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-warmgray">Distress Site:</span>
-                          <span className="font-bold truncate max-w-[200px]">{activeAlertObj.alertLocation}</span>
+                        <div className="flex justify-between gap-2">
+                          <span className="text-warmgray shrink-0">Distress Site:</span>
+                          <span className="font-bold truncate max-w-[200px] min-w-0">{activeAlertObj.alertLocation}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-warmgray">Staff Phone:</span>

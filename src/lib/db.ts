@@ -1,3 +1,5 @@
+import { updateFirestoreUser } from './firestoreUsers';
+import { addFirestoreLead, subscribeFirestoreLeads, updateFirestoreLead } from './firestoreLeads';
 import { User, Lead, Deal, Job, Payment, Supplier, PurchaseOrder, POLineItem, UserRole, Territory, SiteVisit, EmergencyAlert, ReminderRule, LoanApplication, LoanPartner, Invoice, EscalationItem, DisputeItem, AutoPoTriggerRule, ProductionStatusRecord, SupplierScorecardDetail, OrderRatingEntry, SupplierContractSlaRecord, SupplierCommunicationThread, SupplierChatMessage, SupplierPaymentTermsConfig, DeliverySchedule, LiveShipmentTracker, ShipmentTrackingLeg, SiteReadinessChecklist, SiteDeliveryChecklist, SiteDeliveryChecklistItem, DiscrepancyReport, MaterialReceivedConfirmation, ConfirmingParty, DeliveryDelayAlert, StockInTransitItem, DeliverySopTemplate, DamagedMissingPartsReport, DeliveryPartner, RateCardEntry, DeliveryAnalyticsSummary, SupplierPaymentRecord, PaymentMilestoneItem, PaymentOverrideRecord, SupplierInvoiceDoc, SupplierInvoiceLineItem, ThreeWayMatchResult, ScheduledPaymentEntry, PaymentHistoryRecord, TaxGstComplianceRecord, SupplierGstinStatusRecord, SupplierDisputeRecord, DisputeAuditEntry, AdvanceExposureRecord, RetentionHoldRecord, SupplierPaymentAnalyticsRecord, ReconciliationRunRecord, TechnicianJob, TechnicianProfileSummary, InstallationSopStep, InstallationEvidenceItem, TechnicianCheckInRecord, SafetyComplianceItem, TechnicianIssueReport, MaterialUsageLogItem, ReworkAssignmentRecord, FinalHandoverChecklistRecord, CustomerHandoverWalkthroughRecord, WarrantyAmcRegistrationRecord, HandoverCompletionCertificateRecord, QcInspectorAssignmentRecord, QcMechanicalCheckItem, QcMechanicalReport, QcElectricalSafetyCheckItem, QcElectricalReport, ComplianceCertificateRecord, DefectSnagRecord, RecruitmentApplicantRecord, OfferAgreementRecord, PartnerTierAssignmentRecord, MasterPartnerDirectoryRecord, PartnerDeactivationExitRecord, TrainingModule, TrainingLesson, PartnerModuleProgress, PartnerLessonProgress, SopDocument, CertificationAssessment, AssessmentAttemptResult, CertificationBadge, PartnerBadgeRecord, TrainingModuleFeedback, TrainingFeedbackSummary, CommissionRule, CommissionRuleVersionHistory, CommissionPayoutEntry, CommissionPayoutSummary, AutomatedDisbursementRecord, CompetitionContest, LeaderboardEntry, UnifiedBadgeMilestone, PayoutStatementSummary, SkillCapabilityCategory, TechnicianSkillMatrixRow, PartnerComplianceRecord, ComplianceTrendMetric, SopRolloutNotification, PartnerRolloutAcknowledgment, TdsStatementRecord, PayoutDisputeRecord, CustomerProjectSummary, CustomerVaultDocument, CustomerPaymentInstallment, CustomerSupportTicket, CustomerSupportChatMessage, CustomerSupportChatThread, CustomerFeedbackEntry, CustomerAmcBooking, CustomerReferralEntry, CustomerInAppNotification, CustomerNotificationPreferences, AutomationRuleCategorySummary, AutomationRuleActivityLog, CustomWorkflowTriggerRule, InternalNotificationTemplate, EscalationChainConfig, SlaProcessItem, SlaCategoryTrend, TechnicalIncidentLog, IntegrationTechnicalHealth, AutomatedActionAuditEntry, ManualOverrideLogEntry, ApiIntegrationConfig, AutomationTestScenario, CompanyProfileConfig, BrandVersionRecord, RolePermissionConfig, UserPermissionOverride, PermissionChangeAuditEntry, MonitorSignalConfig, DailyMonitorCheckLog, BackupMonitorContact, DataSubjectConsentRecord, DataSubjectRequest, DataRetentionCategoryConfig, PrivacyPolicyVersionRecord, RoleTwoFactorPolicy, ActiveUserSession, SecurityEventLog, PasswordPolicyConfig, DatabaseBackupRunRecord, DataExportJobRecord, DisasterRestorePointInfo, SaaSUsageServiceConfig, SaaSBillingInvoiceRecord, LegalContractTemplateRecord, StateLiftActClauseItem, LegalReviewAuditLog } from '../types';
 
 
@@ -1238,6 +1240,14 @@ const setLocalData = <T>(key: string, value: T): void => {
   localStorage.setItem(`aiec_${key}`, JSON.stringify(value));
 };
 
+// Tracks whether the active app session is a real (non-demo) signed-in user, so
+// Leads can be Firestore-backed for real sessions while staying 100% local for
+// demo sessions — a Lead has no isDemo flag of its own like User does, so this
+// has to be tracked at the session level instead of per-record.
+let isRealSession = false;
+let leadsUnsubscribe: (() => void) | null = null;
+let firestoreLeadsCache: Lead[] = [];
+
 export class DbManager {
   private static getStore<T>(key: string, defaultVal: T): T {
     return getLocalData(key, defaultVal);
@@ -1247,6 +1257,30 @@ export class DbManager {
     setLocalData(key, value);
     // Dispatch custom event to notify React components of changes
     window.dispatchEvent(new Event('aiec_db_update'));
+  }
+
+  // Called from App.tsx whenever currentUser changes. Demo sessions (or no
+  // session) keep Leads 100% local; a real session subscribes to Firestore.
+  static setSessionMode(user: User | null): void {
+    const real = !!user && !user.isDemo;
+    if (real === isRealSession) return;
+    isRealSession = real;
+
+    if (leadsUnsubscribe) {
+      leadsUnsubscribe();
+      leadsUnsubscribe = null;
+    }
+    firestoreLeadsCache = [];
+
+    if (real && user) {
+      leadsUnsubscribe = subscribeFirestoreLeads(
+        { isAdmin: user.role === 'admin', uid: user.id },
+        (leads) => {
+          firestoreLeadsCache = leads;
+          window.dispatchEvent(new Event('aiec_db_update'));
+        }
+      );
+    }
   }
 
   // Users API
@@ -1261,15 +1295,26 @@ export class DbManager {
   static updateUser(user: User): void {
     const list = this.getUsers().map(u => u.id === user.id ? user : u);
     this.setStore('users', list);
+    // Real (non-demo) users also persist to Firestore, so their profile/role
+    // survives a refresh or a new session — demo sessions never touch it.
+    if (!user.isDemo) {
+      updateFirestoreUser(user).catch(err => console.error('Firestore user sync failed:', err));
+    }
   }
 
   static addUser(user: User): void {
     const list = [...this.getUsers(), user];
     this.setStore('users', list);
+    if (!user.isDemo) {
+      updateFirestoreUser(user).catch(err => console.error('Firestore user sync failed:', err));
+    }
   }
 
   // Leads API
   static getLeads(): Lead[] {
+    // Real sessions never see the fake demo/seed leads — only their own
+    // Firestore-backed data (empty until the first snapshot arrives).
+    if (isRealSession) return firestoreLeadsCache;
     return this.getStore('leads', initialLeads);
   }
 
@@ -1278,11 +1323,19 @@ export class DbManager {
   }
 
   static updateLead(lead: Lead): void {
+    if (isRealSession) {
+      updateFirestoreLead(lead).catch(err => console.error('Firestore lead sync failed:', err));
+      return; // the onSnapshot listener updates the cache and fires aiec_db_update
+    }
     const list = this.getLeads().map(l => l.id === lead.id ? lead : l);
     this.setStore('leads', list);
   }
 
   static addLead(lead: Lead): void {
+    if (isRealSession) {
+      addFirestoreLead(lead).catch(err => console.error('Firestore lead sync failed:', err));
+      return;
+    }
     const list = [lead, ...this.getLeads()];
     this.setStore('leads', list);
   }

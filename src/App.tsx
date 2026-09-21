@@ -2,210 +2,92 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, UserRole, UserStatus } from './types';
 import { DbManager } from './lib/db';
-import { Card, Button } from './components/Common';
-import { 
-  AdminDashboard, 
-  SurveyorDashboard, 
-  TechnicianDashboard, 
-  CustomerDashboard, 
-  SupplierDashboard 
-} from './components/Dashboards';
-import { RoleSelectionWizard, AdminRoleManagement } from './components/RoleSelectionWizard';
-import { LiveMapDashboard } from './components/LiveMapDashboard';
-import { LiveActivityFeed } from './components/LiveActivityFeed';
-import { SurveyorLiveTrackingDetailView } from './components/SurveyorLiveTrackingDetailView';
-import { TechnicianLiveTrackingDetailView } from './components/TechnicianLiveTrackingDetailView';
-import { GeofenceTerritoryManagement } from './components/GeofenceTerritoryManagement';
-import { LeadDensityHeatmap } from './components/LeadDensityHeatmap';
-import { SiteVisitVerification } from './components/SiteVisitVerification';
-import { EmergencyEscalationAlert } from './components/EmergencyEscalationAlert';
-import { RouteOptimizationSuggestion } from './components/RouteOptimizationSuggestion';
+import { getOrCreateFirestoreUser, updateFirestoreUser } from './lib/firestoreUsers';
+import { Button } from './components/Common';
+import { RoleSelectionWizard } from './components/RoleSelectionWizard';
 import { SurveyorOnboarding } from './components/SurveyorOnboarding';
 import { TechnicianOnboarding } from './components/TechnicianOnboarding';
 import { SupplierOnboarding } from './components/SupplierOnboarding';
 import { CustomerQuickSignup } from './components/CustomerQuickSignup';
 import { ForgotPasswordReset } from './components/ForgotPasswordReset';
 import { PermissionsPrimer } from './components/PermissionsPrimer';
-import { SalesFunnelAnalytics } from './components/SalesFunnelAnalytics';
-import { LeadInbox } from './components/LeadInbox';
-import { LeadKanban } from './components/LeadKanban';
-import { LeadAssignment } from './components/LeadAssignment';
-import { LeadMergeResolution } from './components/LeadMergeResolution';
-import { LeadScoring } from './components/LeadScoring';
-import { LeadFollowUpScheduler } from './components/LeadFollowUpScheduler';
-import { RevenueProfitAnalytics } from './components/RevenueProfitAnalytics';
-import { WorkerPerformanceLeaderboard } from './components/WorkerPerformanceLeaderboard';
-import { ConversionRateAnalytics } from './components/ConversionRateAnalytics';
-import { SupplierPerformanceScorecard } from './components/SupplierPerformanceScorecard';
-import { AutomationHealthMonitor } from './components/AutomationHealthMonitor';
-import { FinancialCashFlowReceivables } from './components/FinancialCashFlowReceivables';
-import { AlertsExceptionsDashboard } from './components/AlertsExceptionsDashboard';
-import { CustomReportBuilder } from './components/CustomReportBuilder';
-import { LeadSourceAttribution } from './components/LeadSourceAttribution';
-import { LostLeadDisqualification } from './components/LostLeadDisqualification';
-import { BulkLeadImportExport } from './components/BulkLeadImportExport';
-import { CommunicationTemplatesLibrary } from './components/CommunicationTemplatesLibrary';
-import { AutomatedSequenceBuilder } from './components/AutomatedSequenceBuilder';
-import { WhatsAppBusinessChatConsole } from './components/WhatsAppBusinessChatConsole';
-import { CallLogAutoDialer } from './components/CallLogAutoDialer';
-import { SMSBroadcastDeliveryReport } from './components/SMSBroadcastDeliveryReport';
-import { ConversationAIBotConfig } from './components/ConversationAIBotConfig';
-import { CustomerReplyInbox } from './components/CustomerReplyInbox';
-import { CommComplianceManager } from './components/CommComplianceManager';
-import { FollowUpStageRules } from './components/FollowUpStageRules';
-import { CommAnalytics } from './components/CommAnalytics';
-import { QuotationInputSpecs } from './components/QuotationInputSpecs';
-import { QuotePricing } from './components/QuotePricing';
-import { QuotationTemplateBranding } from './components/QuotationTemplateBranding';
-import { QuotationPreview } from './components/QuotationPreview';
-import { MultiOptionComparison } from './components/MultiOptionComparison';
-import { QuotationVersionHistory } from './components/QuotationVersionHistory';
-import { DiscountApprovalWorkflow } from './components/DiscountApprovalWorkflow';
-import { QuotationSendEDelivery } from './components/QuotationSendEDelivery';
-import { QuotationAnalyticsWinLoss } from './components/QuotationAnalyticsWinLoss';
-import { PricingRulesMarginConfig } from './components/PricingRulesMarginConfig';
-import { AutoNegotiationBotConfig } from './components/AutoNegotiationBotConfig';
-import { LiveNegotiationThread } from './components/LiveNegotiationThread';
-import { CounterOfferApproval } from './components/CounterOfferApproval';
-import { DealTermsFinalization } from './components/DealTermsFinalization';
-import { DigitalContractGenerator } from './components/DigitalContractGenerator';
-import { ESignatureCapture } from './components/ESignatureCapture';
-import { DealClosureConfirmation } from './components/DealClosureConfirmation';
-import { CustomerObjectionHandling } from './components/CustomerObjectionHandling';
-import { CompetitorBattlecard } from './components/CompetitorBattlecard';
-import { DealWonCelebration } from './components/DealWonCelebration';
-import { PaymentStageScheduleSetup } from './components/PaymentStageScheduleSetup';
-import { PaymentCollectionDashboard } from './components/PaymentCollectionDashboard';
-import { PaymentReminderConfig } from './components/PaymentReminderConfig';
-import { OnlinePaymentCheckout } from './components/OnlinePaymentCheckout';
-import { LoanEmiApplication } from './components/LoanEmiApplication';
-import { LoanPartnerIntegration } from './components/LoanPartnerIntegration';
-import { InvoiceGenerator } from './components/InvoiceGenerator';
-import { PaymentReceiptHistory } from './components/PaymentReceiptHistory';
-import { OverduePaymentEscalation } from './components/OverduePaymentEscalation';
-import { RefundDisputeManagement } from './components/RefundDisputeManagement';
-import { SupplierDirectory } from './components/SupplierDirectory';
-import { PurchaseOrderGenerator } from './components/PurchaseOrderGenerator';
-import { SupplierCatalogPricing } from './components/SupplierCatalogPricing';
-import { AutoPoTriggerRules } from './components/AutoPoTriggerRules';
-import { SupplierOrderStatusTracking } from './components/SupplierOrderStatusTracking';
-import { ManufacturerProductionStatus } from './components/ManufacturerProductionStatus';
-import { SupplierRatingScorecard } from './components/SupplierRatingScorecard';
-import { SupplierContractSla } from './components/SupplierContractSla';
-import { SupplierCommunicationThreads } from './components/SupplierCommunicationThreads';
-import { SupplierPaymentTermsConfigScreen } from './components/SupplierPaymentTermsConfigScreen';
-import { DeliverySchedulingScreen } from './components/DeliverySchedulingScreen';
-import { LiveShipmentTrackingScreen } from './components/LiveShipmentTrackingScreen';
-import { SiteDeliveryChecklistScreen } from './components/SiteDeliveryChecklistScreen';
-import { MaterialReceivedConfirmationScreen } from './components/MaterialReceivedConfirmationScreen';
-import { DeliveryDelayAlertEscalationScreen } from './components/DeliveryDelayAlertEscalationScreen';
-import { StockInTransitScreen } from './components/StockInTransitScreen';
-import { DeliverySopConfigScreen } from './components/DeliverySopConfigScreen';
-import { DamagedMissingPartsReportScreen } from './components/DamagedMissingPartsReportScreen';
-import { DeliveryPartnerManagementScreen } from './components/DeliveryPartnerManagementScreen';
-import { DeliveryAnalyticsScreen } from './components/DeliveryAnalyticsScreen';
-import { SupplierPaymentApprovalScreen } from './components/SupplierPaymentApprovalScreen';
-import { MilestonePaymentReleaseScreen } from './components/MilestonePaymentReleaseScreen';
-import { SupplierInvoiceMatchingScreen } from './components/SupplierInvoiceMatchingScreen';
-import { SupplierPaymentScheduleScreen } from './components/SupplierPaymentScheduleScreen';
-import { SupplierPaymentHistoryScreen } from './components/SupplierPaymentHistoryScreen';
-import { TaxGstComplianceScreen } from './components/TaxGstComplianceScreen';
-import { SupplierDisputeResolutionScreen } from './components/SupplierDisputeResolutionScreen';
-import { AdvancePaymentRetentionScreen } from './components/AdvancePaymentRetentionScreen';
-import { SupplierPaymentAnalyticsScreen } from './components/SupplierPaymentAnalyticsScreen';
-import { AutoReconciliationScreen } from './components/AutoReconciliationScreen';
-import { TechnicianHomeMyJobsScreen } from './components/TechnicianHomeMyJobsScreen';
-import { JobDetailSiteInfoScreen } from './components/JobDetailSiteInfoScreen';
-import { InstallationSopChecklistScreen } from './components/InstallationSopChecklistScreen';
-import { PhotoVideoEvidenceCaptureScreen } from './components/PhotoVideoEvidenceCaptureScreen';
-import { TechnicianCheckInCheckOutScreen } from './components/TechnicianCheckInCheckOutScreen';
-import { SafetyComplianceChecklistScreen } from './components/SafetyComplianceChecklistScreen';
-import { IssueBlockerReportingScreen } from './components/IssueBlockerReportingScreen';
-import { MaterialUsageLoggingScreen } from './components/MaterialUsageLoggingScreen';
-import { QcInspectorAssignmentScreen } from './components/QcInspectorAssignmentScreen';
-import { QualityChecklistMechanicalScreen } from './components/QualityChecklistMechanicalScreen';
-import { QualityChecklistElectricalScreen } from './components/QualityChecklistElectricalScreen';
-import { ComplianceCertificationScreen } from './components/ComplianceCertificationScreen';
-import { DefectSnagListScreen } from './components/DefectSnagListScreen';
-import { ReworkAssignmentScreen } from './components/ReworkAssignmentScreen';
-import { FinalHandoverChecklistScreen } from './components/FinalHandoverChecklistScreen';
-import { CustomerHandoverWalkthroughScreen } from './components/CustomerHandoverWalkthroughScreen';
-import { WarrantyAmcRegistrationScreen } from './components/WarrantyAmcRegistrationScreen';
-import { HandoverCompletionCertificateScreen } from './components/HandoverCompletionCertificateScreen';
-import { InstallationProgressTimelineScreen } from './components/InstallationProgressTimelineScreen';
-import { TechnicianTeamCoordinationScreen } from './components/TechnicianTeamCoordinationScreen';
-import { RecruitmentLandingScreen } from './components/RecruitmentLandingScreen';
-import { ApplicantDataCollectionScreen } from './components/ApplicantDataCollectionScreen';
-import { ApplicantScreeningScreen } from './components/ApplicantScreeningScreen';
-import { InterviewSchedulingScreen } from './components/InterviewSchedulingScreen';
-import { BackgroundVerificationScreen } from './components/BackgroundVerificationScreen';
-import { OfferOnboardingAgreementScreen } from './components/OfferOnboardingAgreementScreen';
-import { NewPartnerAggregationDashboardScreen } from './components/NewPartnerAggregationDashboardScreen';
-import { PartnerTierCategoryAssignmentScreen } from './components/PartnerTierCategoryAssignmentScreen';
-import { PartnerDirectoryScreen } from './components/PartnerDirectoryScreen';
-import { PartnerDeactivationExitScreen } from './components/PartnerDeactivationExitScreen';
-import { TrainingModuleLibraryScreen } from './components/TrainingModuleLibraryScreen';
-import { VideoInteractiveLessonPlayerScreen } from './components/VideoInteractiveLessonPlayerScreen';
-import { SopDocumentRepositoryScreen } from './components/SopDocumentRepositoryScreen';
-import { QuizCertificationTestScreen } from './components/QuizCertificationTestScreen';
-import { CertificationBadgeProgressScreen } from './components/CertificationBadgeProgressScreen';
-import { SkillMatrixGapAnalysisScreen } from './components/SkillMatrixGapAnalysisScreen';
-import { TrainingComplianceTrackerScreen } from './components/TrainingComplianceTrackerScreen';
-import { NewSopRolloutNotificationScreen } from './components/NewSopRolloutNotificationScreen';
-import { TrainingFeedbackScreen } from './components/TrainingFeedbackScreen';
-import { CommissionRulesEngineScreen } from './components/CommissionRulesEngineScreen';
-import { StageWisePayoutTrackerScreen } from './components/StageWisePayoutTrackerScreen';
-import { PayoutApprovalQueueScreen } from './components/PayoutApprovalQueueScreen';
-import { AutomatedPayoutDisbursementScreen } from './components/AutomatedPayoutDisbursementScreen';
-import { RewardsLeaderboardScreen } from './components/RewardsLeaderboardScreen';
-import { BadgesMilestonesScreen } from './components/BadgesMilestonesScreen';
-import { ContestConfigurationScreen } from './components/ContestConfigurationScreen';
-import { PayoutHistoryStatementsScreen } from './components/PayoutHistoryStatementsScreen';
-import { TaxDeductionStatementScreen } from './components/TaxDeductionStatementScreen';
-import { PayoutDisputeQueryScreen } from './components/PayoutDisputeQueryScreen';
-import { CustomerHomeDashboardScreen } from './components/CustomerHomeDashboardScreen';
-import { ProjectStatusTrackerScreen } from './components/ProjectStatusTrackerScreen';
-import { CustomerDocumentVaultScreen } from './components/CustomerDocumentVaultScreen';
-import { CustomerPaymentInstallmentsScreen } from './components/CustomerPaymentInstallmentsScreen';
-import { CustomerSupportTicketScreen } from './components/CustomerSupportTicketScreen';
-import { CustomerLiveSupportChatScreen } from './components/CustomerLiveSupportChatScreen';
-import { CustomerFeedbackRatingScreen } from './components/CustomerFeedbackRatingScreen';
-import { CustomerAmcBookingScreen } from './components/CustomerAmcBookingScreen';
-import { CustomerReferralProgramScreen } from './components/CustomerReferralProgramScreen';
-import { CustomerNotificationCenterScreen } from './components/CustomerNotificationCenterScreen';
-import { MasterAutomationRulesDashboardScreen } from './components/MasterAutomationRulesDashboardScreen';
-import { WorkflowTriggerBuilderScreen } from './components/WorkflowTriggerBuilderScreen';
-import { NotificationTemplatesChannelsScreen } from './components/NotificationTemplatesChannelsScreen';
-import { EscalationMatrixConfigScreen } from './components/EscalationMatrixConfigScreen';
-import { SlaTimerBreachAlertScreen } from './components/SlaTimerBreachAlertScreen';
-import { SystemHealthBotMonitoringScreen } from './components/SystemHealthBotMonitoringScreen';
-import { AuditLogAutomatedActionsScreen } from './components/AuditLogAutomatedActionsScreen';
-import { ManualOverrideConsoleScreen } from './components/ManualOverrideConsoleScreen';
-import { ApiIntegrationManagementScreen } from './components/ApiIntegrationManagementScreen';
-import { AutomationTestingSandboxScreen } from './components/AutomationTestingSandboxScreen';
-import { CompanyProfileBrandingSettingsScreen } from './components/CompanyProfileBrandingSettingsScreen';
-import { UserRolePermissionManagementScreen } from './components/UserRolePermissionManagementScreen';
-import { SinglePersonMonitorControlPanelScreen } from './components/SinglePersonMonitorControlPanelScreen';
-import { DataPrivacyConsentManagementScreen } from './components/DataPrivacyConsentManagementScreen';
-import { SecuritySessionManagementScreen } from './components/SecuritySessionManagementScreen';
-import { BackupDataExportScreen } from './components/BackupDataExportScreen';
-import { SaaSOpsSubscriptionBillingScreen } from './components/SaaSOpsSubscriptionBillingScreen';
-import { LegalContractTemplatesRepositoryScreen } from './components/LegalContractTemplatesRepositoryScreen';
-import { HelpFaqSupportScreen } from './components/HelpFaqSupportScreen';
-import { AppVersionChangelogFeedbackScreen } from './components/AppVersionChangelogFeedbackScreen';
-import { 
-  Building, Phone, Shield, ArrowRight, User as UserIcon, 
-  Lock, CheckCircle2, ChevronRight, LogOut, Settings, 
-  Layers, Hammer, Truck, Users, LayoutDashboard, Sparkles,
-  MapPin, Compass, Award, FileText, AlertTriangle, AlertCircle, Globe, Activity, Flame, TrendingUp, HelpCircle, ShieldCheck,
-  LineChart, Grid, Cpu, Landmark, Split, Calendar, FileSpreadsheet, MessageSquare, GitMerge, Send, Bot, Inbox, Tag,
-  DollarSign, Palette, Eye, History, Percent, Sliders, CreditCard, SlidersHorizontal, ClipboardCheck, FileCheck, BarChart2, Scale, Wrench, Camera, ClipboardList, Bell, GitCommit, Clock, Zap, Gift, Database, Info
+import {
+  Building,
+  Phone,
+  Shield,
+  ArrowRight,
+  User as UserIcon,
+  Lock,
+  CheckCircle2,
+  ChevronRight,
+  LogOut,
+  Settings,
+  Layers,
+  Hammer,
+  Truck,
+  Users,
+  LayoutDashboard,
+  Sparkles,
+  MapPin,
+  Compass,
+  Award,
+  FileText,
+  AlertTriangle,
+  AlertCircle,
+  Globe,
+  Activity,
+  Flame,
+  TrendingUp,
+  HelpCircle,
+  ShieldCheck,
+  LineChart,
+  Grid,
+  Cpu,
+  Landmark,
+  Split,
+  Calendar,
+  FileSpreadsheet,
+  MessageSquare,
+  GitMerge,
+  Send,
+  Bot,
+  Inbox,
+  Tag,
+  DollarSign,
+  Palette,
+  Eye,
+  History,
+  Percent,
+  Sliders,
+  CreditCard,
+  SlidersHorizontal,
+  ClipboardCheck,
+  FileCheck,
+  BarChart2,
+  Scale,
+  Wrench,
+  Camera,
+  ClipboardList,
+  Bell,
+  GitCommit,
+  Clock,
+  Zap,
+  Gift,
+  Database,
+  Info,
+  Search,
+  X
 } from 'lucide-react';
 import { useLanguage, translations as appTranslations, Language } from './lib/language';
-import { useTheme, ThemeMode } from './lib/theme';
-import { APIProvider } from '@vis.gl/react-google-maps';
+import { useTheme } from './lib/theme';
 import { auth } from './lib/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { AdminRouter } from './routers/AdminRouter';
+import { TechnicianRouter } from './routers/TechnicianRouter';
+import { SurveyorRouter } from './routers/SurveyorRouter';
+import { CustomerRouter } from './routers/CustomerRouter';
+import { SupplierRouter } from './routers/SupplierRouter';
+import { SharedRoutes } from './routers/SharedRoutes';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -213,6 +95,8 @@ export default function App() {
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [carouselStep, setCarouselStep] = useState(0);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
+  const [mobileNavSearch, setMobileNavSearch] = useState('');
   const { language: appLanguage, setLanguage: setAppLanguage, t } = useLanguage(currentUser);
   const { theme: appTheme, setTheme: setAppTheme } = useTheme(currentUser);
   const [loginPhone, setLoginPhone] = useState('');
@@ -287,8 +171,38 @@ export default function App() {
     };
   }, []);
 
+  // Real (non-demo) sessions subscribe DbManager's Leads API to Firestore;
+  // demo sessions (or no session) keep it 100% local. See DbManager.setSessionMode.
+  useEffect(() => {
+    DbManager.setSessionMode(currentUser);
+  }, [currentUser?.id, currentUser?.isDemo]);
+
   const renderTabContent = () => {
     if (!currentUser) return null;
+    const routerProps = {
+      currentUser,
+      activeTab,
+      setActiveTab,
+      appLanguage,
+      selectedTechJobId,
+      setSelectedTechJobId,
+      selectedApplicantId,
+      setSelectedApplicantId,
+      selectedSopStepId,
+      setSelectedSopStepId,
+      trackingPoId,
+      setTrackingPoId,
+      selectedPaymentId,
+      setSelectedPaymentId,
+      selectedTrainingModuleId,
+      setSelectedTrainingModuleId,
+      selectedTrainingLessonId,
+      setSelectedTrainingLessonId,
+      selectedAssessmentId,
+      setSelectedAssessmentId,
+      handleLogout,
+      renderPreferencesSection,
+    };
     return (
       <AnimatePresence mode="wait">
         <motion.div
@@ -298,1550 +212,14 @@ export default function App() {
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.25 }}
         >
-          {currentUser.role === 'admin' && activeTab === 'Home' && <AdminDashboard user={currentUser} />}
-          {currentUser.role === 'customer' && activeTab === 'Home' && (
-            <CustomerHomeDashboardScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'LeadInbox' && (
-            <LeadInbox user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'LeadPipeline' && (
-            <LeadKanban user={currentUser} onBackToInbox={() => setActiveTab('LeadInbox')} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'LeadAssignment' && (
-            <LeadAssignment user={currentUser} onBack={() => setActiveTab('LeadInbox')} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'LeadMerge' && (
-            <LeadMergeResolution user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'LeadScoring' && (
-            <LeadScoring user={currentUser} onBack={() => setActiveTab('LeadInbox')} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'LiveMap' && (
-            <LiveMapDashboard user={currentUser} apiKey={googleMapsApiKey} hasValidKey={hasValidGoogleMapsKey} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'RouteOpt' && (
-            <RouteOptimizationSuggestion user={currentUser} apiKey={googleMapsApiKey} hasValidKey={hasValidGoogleMapsKey} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'SOSDesk' && (
-            <EmergencyEscalationAlert user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'LiveFeed' && (
-            <LiveActivityFeed user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'SurveyorAudit' && (
-            <SurveyorLiveTrackingDetailView user={currentUser} onBack={() => setActiveTab('LiveMap')} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'TechnicianAudit' && (
-            <TechnicianLiveTrackingDetailView user={currentUser} onBack={() => setActiveTab('LiveMap')} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'Territories' && (
-            <GeofenceTerritoryManagement user={currentUser} apiKey={googleMapsApiKey} hasValidKey={hasValidGoogleMapsKey} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'Heatmap' && (
-            <LeadDensityHeatmap user={currentUser} apiKey={googleMapsApiKey} hasValidKey={hasValidGoogleMapsKey} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'SiteVerify' && (
-            <SiteVisitVerification user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'Funnel' && (
-            <SalesFunnelAnalytics user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'RevenueProfit' && (
-            <RevenueProfitAnalytics user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'FinancialCashFlow' && (
-            <FinancialCashFlowReceivables user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'AlertsExceptions' && (
-            <AlertsExceptionsDashboard user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'Leaderboard' && (
-            <WorkerPerformanceLeaderboard user={currentUser} language={appLanguage} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'Conversion' && (
-            <ConversionRateAnalytics user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'SupplierScorecard' && (
-            <SupplierPerformanceScorecard user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'AutomationHealth' && (
-            <AutomationHealthMonitor user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'Partners' && (
-            <AdminRoleManagement currentAdmin={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'LeadFollowUp' && (
-            <LeadFollowUpScheduler user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'LeadSource' && (
-            <LeadSourceAttribution user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'LeadLost' && (
-            <LostLeadDisqualification user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'LeadMigrate' && (
-            <BulkLeadImportExport user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'CommTemplates' && (
-            <CommunicationTemplatesLibrary user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'CommSequences' && (
-            <AutomatedSequenceBuilder user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'CommWhatsApp' && (
-            <WhatsAppBusinessChatConsole user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'CommCalls' && (
-            <CallLogAutoDialer user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'CommSMS' && (
-            <SMSBroadcastDeliveryReport user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'CommBot' && (
-            <ConversationAIBotConfig user={currentUser} />
-          )}
-           {currentUser.role === 'admin' && activeTab === 'CommInbox' && (
-            <CustomerReplyInbox user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'CommCompliance' && (
-            <CommComplianceManager user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'CommRules' && (
-            <FollowUpStageRules user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'CommAnalytics' && (
-            <CommAnalytics user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteSpecs' && (
-            <QuotationInputSpecs 
-              user={currentUser} 
-              onNavigateToPricing={(specs) => {
-                setActiveTab('QuotePricing');
-              }} 
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuotePricing' && (
-            <QuotePricing user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteBranding' && (
-            <QuotationTemplateBranding user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuotePreview' && (
-            <QuotationPreview user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteCompare' && (
-            <MultiOptionComparison user={currentUser} onSelectPackage={(tierId, finalPrice) => {
-              setActiveTab('QuotePreview');
-            }} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteHistory' && (
-            <QuotationVersionHistory user={currentUser} onSelectActiveVersion={(version) => {
-              setActiveTab('QuotePreview');
-            }} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteDiscount' && (
-            <DiscountApprovalWorkflow user={currentUser} onNavigateToPreview={() => {
-              setActiveTab('QuotePreview');
-            }} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteDelivery' && (
-            <QuotationSendEDelivery user={currentUser} onSendComplete={() => {
-              setActiveTab('QuotePreview');
-            }} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteAnalytics' && (
-            <QuotationAnalyticsWinLoss user={currentUser} onNavigateToQuote={(id) => {
-              setActiveTab('QuotePreview');
-            }} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuotePricingRules' && (
-            <PricingRulesMarginConfig user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteNegotiationBot' && (
-            <AutoNegotiationBotConfig 
-              user={currentUser} 
-              onNavigateToPreview={() => setActiveTab('QuotePreview')}
-              onNavigateToThread={() => setActiveTab('QuoteNegotiationThread')}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteNegotiationThread' && (
-            <LiveNegotiationThread user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteCounterOfferApproval' && (
-            <CounterOfferApproval user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteDealTermsFinalization' && (
-            <DealTermsFinalization user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteDigitalContract' && (
-            <DigitalContractGenerator user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteESignature' && (
-            <ESignatureCapture user={currentUser} onGoToNext={() => setActiveTab('QuoteDealClosure')} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteDealClosure' && (
-            <DealClosureConfirmation user={currentUser} onBackToStart={() => setActiveTab('QuoteDigitalContract')} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteObjectionHandling' && (
-            <CustomerObjectionHandling user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteCompetitorBattlecard' && (
-            <CompetitorBattlecard user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'QuoteDealWonCelebration' && (
-            <DealWonCelebration user={currentUser} onBackToStart={() => setActiveTab('QuoteDealClosure')} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'PaymentStageScheduleSetup' && (
-            <PaymentStageScheduleSetup user={currentUser} />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'PaymentCollectionDashboard' && (
-            <PaymentCollectionDashboard 
-              user={currentUser} 
-              onNavigateToConfig={() => setActiveTab('PaymentReminderConfig')}
-              onNavigateToEscalation={() => setActiveTab('OverduePaymentEscalation')}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'PaymentReminderConfig' && (
-            <PaymentReminderConfig 
-              user={currentUser} 
-              onNavigateToCollection={() => setActiveTab('PaymentCollectionDashboard')}
-            />
-          )}
-          {activeTab === 'OnlinePaymentCheckout' && (
-            <OnlinePaymentCheckout 
-              user={currentUser}
-              onNavigateToLoan={() => setActiveTab('LoanEmiApplication')}
-              onSuccess={() => setActiveTab('PaymentReceiptHistory')}
-            />
-          )}
-          {activeTab === 'LoanEmiApplication' && (
-            <LoanEmiApplication 
-              user={currentUser}
-              onNavigateToCheckout={() => setActiveTab('OnlinePaymentCheckout')}
-              onNavigateToStatus={() => setActiveTab('LoanPartnerIntegration')}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'LoanPartnerIntegration' && (
-            <LoanPartnerIntegration 
-              user={currentUser}
-              onNavigateToCollection={() => setActiveTab('PaymentCollectionDashboard')}
-              onNavigateToEscalation={() => setActiveTab('OverduePaymentEscalation')}
-            />
-          )}
-          {activeTab === 'InvoiceGenerator' && (
-            <InvoiceGenerator 
-              user={currentUser}
-              onNavigateToReceipts={() => setActiveTab('PaymentReceiptHistory')}
-            />
-          )}
-          {activeTab === 'PaymentReceiptHistory' && (
-            <PaymentReceiptHistory 
-              user={currentUser}
-              onNavigateToInvoice={(id) => setActiveTab('InvoiceGenerator')}
-              onNavigateToCheckout={() => setActiveTab('OnlinePaymentCheckout')}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'OverduePaymentEscalation' && (
-            <OverduePaymentEscalation 
-              user={currentUser}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'RefundDisputeManagement' && (
-            <RefundDisputeManagement 
-              user={currentUser}
-              onNavigateToInvoices={() => setActiveTab('InvoiceGenerator')}
-            />
-          )}
-          {(currentUser.role === 'admin' || currentUser.role === 'supplier') && activeTab === 'SupplierDirectory' && (
-            <SupplierDirectory 
-              user={currentUser}
-              onNavigateToPO={(supplierId) => {
-                setActiveTab('PurchaseOrderGenerator');
-              }}
-            />
-          )}
-          {(currentUser.role === 'admin' || currentUser.role === 'supplier') && activeTab === 'SupplierCatalogPricing' && (
-            <SupplierCatalogPricing 
-              user={currentUser}
-              onNavigateToPO={() => setActiveTab('PurchaseOrderGenerator')}
-            />
-          )}
-          {(currentUser.role === 'admin' || currentUser.role === 'supplier') && activeTab === 'PurchaseOrderGenerator' && (
-            <PurchaseOrderGenerator 
-              user={currentUser}
-              onNavigateToSuppliers={() => {
-                setActiveTab('SupplierDirectory');
-              }}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'AutoPoTriggerRules' && (
-            <AutoPoTriggerRules 
-              user={currentUser}
-              onNavigateToPOs={() => setActiveTab('PurchaseOrderGenerator')}
-            />
-          )}
-          {(currentUser.role === 'admin' || currentUser.role === 'supplier') && activeTab === 'SupplierOrderStatusTracking' && (
-            <SupplierOrderStatusTracking 
-              user={currentUser}
-              onNavigateToPOGenerator={() => setActiveTab('PurchaseOrderGenerator')}
-            />
-          )}
-          {(currentUser.role === 'admin' || currentUser.role === 'supplier') && activeTab === 'ManufacturerProductionStatus' && (
-            <ManufacturerProductionStatus 
-              user={currentUser}
-              onNavigateToPO={(poId) => setActiveTab('PurchaseOrderGenerator')}
-              onNavigateToTracking={() => setActiveTab('SupplierOrderStatusTracking')}
-            />
-          )}
-          {(currentUser.role === 'admin' || currentUser.role === 'supplier') && (activeTab === 'SupplierRatingScorecard' || activeTab === 'SupplierScorecard') && (
-            <SupplierRatingScorecard 
-              user={currentUser}
-              onNavigateToPO={(poId) => setActiveTab('PurchaseOrderGenerator')}
-              onNavigateToContracts={() => setActiveTab('SupplierContractSla')}
-            />
-          )}
-          {(currentUser.role === 'admin' || currentUser.role === 'supplier') && activeTab === 'SupplierContractSla' && (
-            <SupplierContractSla 
-              user={currentUser}
-              onNavigateToPOGenerator={() => setActiveTab('PurchaseOrderGenerator')}
-              onNavigateToScorecard={() => setActiveTab('SupplierRatingScorecard')}
-            />
-          )}
-          {(currentUser.role === 'admin' || currentUser.role === 'supplier') && activeTab === 'SupplierCommThreads' && (
-            <SupplierCommunicationThreads user={currentUser} />
-          )}
-          {(currentUser.role === 'admin' || currentUser.role === 'supplier') && activeTab === 'SupplierPaymentTerms' && (
-            <SupplierPaymentTermsConfigScreen user={currentUser} />
-          )}
-          {(currentUser.role === 'admin' || currentUser.role === 'supplier') && activeTab === 'DeliveryScheduling' && (
-            <DeliverySchedulingScreen 
-              user={currentUser} 
-              onNavigateToTracking={(poId) => {
-                setTrackingPoId(poId);
-                setActiveTab('LiveShipmentTracking');
-              }}
-            />
-          )}
-          {activeTab === 'LiveShipmentTracking' && (
-            <LiveShipmentTrackingScreen 
-              user={currentUser} 
-              selectedPoId={trackingPoId}
-              onBackToSchedules={() => setActiveTab('DeliveryScheduling')}
-            />
-          )}
-          {activeTab === 'SiteDeliveryChecklist' && (
-            <SiteDeliveryChecklistScreen 
-              user={currentUser} 
-              selectedPoId={trackingPoId}
-              onNavigateToConfirmation={(poId) => {
-                setTrackingPoId(poId);
-                setActiveTab('MaterialReceivedConfirmation');
-              }}
-            />
-          )}
-          {activeTab === 'MaterialReceivedConfirmation' && (
-            <MaterialReceivedConfirmationScreen 
-              user={currentUser} 
-              selectedPoId={trackingPoId}
-              onBackToChecklist={() => setActiveTab('SiteDeliveryChecklist')}
-              onNavigateToPayment={() => setActiveTab('OnlinePaymentCheckout')}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'DeliveryDelayAlerts' && (
-            <DeliveryDelayAlertEscalationScreen 
-              user={currentUser} 
-              onNavigateToThread={() => setActiveTab('SupplierCommThreads')}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'StockInTransit' && (
-            <StockInTransitScreen 
-              user={currentUser} 
-              onNavigateToPo={(poId) => {
-                setTrackingPoId(poId);
-                setActiveTab('PurchaseOrderGenerator');
-              }}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'DeliverySopConfig' && (
-            <DeliverySopConfigScreen user={currentUser} />
-          )}
-          {activeTab === 'DamagedMissingPartsReport' && (
-            <DamagedMissingPartsReportScreen 
-              user={currentUser} 
-              selectedPoId={trackingPoId}
-              onNavigateToThread={() => setActiveTab('SupplierCommThreads')}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'DeliveryPartnerManagement' && (
-            <DeliveryPartnerManagementScreen 
-              user={currentUser} 
-              onNavigateToPo={(poId) => {
-                setTrackingPoId(poId);
-                setActiveTab('PurchaseOrderGenerator');
-              }}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'DeliveryAnalytics' && (
-            <DeliveryAnalyticsScreen 
-              user={currentUser} 
-              onNavigateToSrm={() => setActiveTab('SupplierScorecard')}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'SupplierPaymentApproval' && (
-            <SupplierPaymentApprovalScreen 
-              user={currentUser}
-              onNavigateToReleaseDetail={(paymentId) => {
-                setSelectedPaymentId(paymentId);
-                setActiveTab('MilestonePaymentRelease');
-              }}
-              onNavigateToDiscrepancyReport={(reportId) => {
-                setActiveTab('DamagedMissingPartsReport');
-              }}
-            />
-          )}
-          {currentUser.role === 'admin' && activeTab === 'MilestonePaymentRelease' && (
-            <MilestonePaymentReleaseScreen 
-              user={currentUser}
-              paymentId={selectedPaymentId}
-              onBack={() => setActiveTab('SupplierPaymentApproval')}
-              onNavigateToDiscrepancyReport={(reportId) => {
-                setActiveTab('DamagedMissingPartsReport');
-              }}
-            />
-          )}
-          {activeTab === 'SupplierInvoiceMatching' && (
-            <SupplierInvoiceMatchingScreen 
-              user={currentUser}
-              onNavigateToApprovalQueue={() => setActiveTab('SupplierPaymentApproval')}
-            />
-          )}
-          {activeTab === 'SupplierPaymentSchedule' && (
-            <SupplierPaymentScheduleScreen 
-              user={currentUser}
-              onNavigateToReleaseDetail={(paymentId) => {
-                setSelectedPaymentId(paymentId);
-                setActiveTab('MilestonePaymentRelease');
-              }}
-              onNavigateToApprovalQueue={() => setActiveTab('SupplierPaymentApproval')}
-            />
-          )}
-          {activeTab === 'SupplierPaymentHistory' && (
-            <SupplierPaymentHistoryScreen 
-              user={currentUser}
-              onNavigateToInvoiceMatching={() => setActiveTab('SupplierInvoiceMatching')}
-              onNavigateToApprovalQueue={() => setActiveTab('SupplierPaymentApproval')}
-            />
-          )}
-          {activeTab === 'TaxGstCompliance' && (
-            <TaxGstComplianceScreen 
-              user={currentUser}
-              onNavigateToInvoiceMatching={() => setActiveTab('SupplierInvoiceMatching')}
-              onNavigateToDisputeResolution={() => setActiveTab('SupplierDisputeResolution')}
-            />
-          )}
-          {activeTab === 'SupplierDisputeResolution' && (
-            <SupplierDisputeResolutionScreen 
-              user={currentUser}
-              onNavigateToPaymentApproval={() => setActiveTab('SupplierPaymentApproval')}
-              onNavigateToPaymentHistory={() => setActiveTab('SupplierPaymentHistory')}
-            />
-          )}
-          {activeTab === 'AdvancePaymentRetention' && (
-            <AdvancePaymentRetentionScreen 
-              user={currentUser}
-              onNavigateToMilestoneRelease={(poId) => {
-                if (poId) setSelectedPaymentId('pay_' + poId);
-                setActiveTab('MilestonePaymentRelease');
-              }}
-              onNavigateToDisputeResolution={() => setActiveTab('SupplierDisputeResolution')}
-            />
-          )}
-          {activeTab === 'SupplierPaymentAnalytics' && (
-            <SupplierPaymentAnalyticsScreen 
-              user={currentUser}
-              onNavigateToDisputeResolution={() => setActiveTab('SupplierDisputeResolution')}
-              onNavigateToSupplierDirectory={() => setActiveTab('Partners')}
-            />
-          )}
-          {activeTab === 'AutoReconciliation' && (
-            <AutoReconciliationScreen 
-              user={currentUser}
-              onNavigateToAlertsDashboard={() => setActiveTab('AutomationHealth')}
-              onNavigateToPaymentHistory={() => setActiveTab('SupplierPaymentHistory')}
-            />
-          )}
-
-          {activeTab === 'TechnicianHomeMyJobs' && (
-            <TechnicianHomeMyJobsScreen
-              user={currentUser}
-              onSelectJob={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('JobDetailSiteInfo');
-              }}
-              onOpenSos={() => {
-                setActiveTab('SOSDesk');
-              }}
-            />
-          )}
-
-          {activeTab === 'JobDetailSiteInfo' && (
-            <JobDetailSiteInfoScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('TechnicianHomeMyJobs')}
-              onStartSopChecklist={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('InstallationSopChecklist');
-              }}
-            />
-          )}
-
-          {activeTab === 'InstallationSopChecklist' && (
-            <InstallationSopChecklistScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('JobDetailSiteInfo')}
-              onOpenEvidenceCapture={(jId, stepId) => {
-                setSelectedTechJobId(jId);
-                setSelectedSopStepId(stepId);
-                setActiveTab('PhotoVideoEvidenceCapture');
-              }}
-              onOpenCheckInScreen={(jId) => {
-                setSelectedTechJobId(jId);
-                setActiveTab('TechnicianCheckInCheckOut');
-              }}
-            />
-          )}
-
-          {activeTab === 'PhotoVideoEvidenceCapture' && (
-            <PhotoVideoEvidenceCaptureScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              initialStepId={selectedSopStepId}
-              onBack={() => setActiveTab('InstallationSopChecklist')}
-            />
-          )}
-
-          {activeTab === 'TechnicianCheckInCheckOut' && (
-            <TechnicianCheckInCheckOutScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('JobDetailSiteInfo')}
-              onNavigateToSopChecklist={(jId) => {
-                setSelectedTechJobId(jId);
-                setActiveTab('InstallationSopChecklist');
-              }}
-            />
-          )}
-
-          {activeTab === 'SafetyComplianceChecklist' && (
-            <SafetyComplianceChecklistScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('InstallationSopChecklist')}
-              onOpenEvidenceCapture={(jId, stepId) => {
-                setSelectedTechJobId(jId);
-                setSelectedSopStepId(stepId);
-                setActiveTab('PhotoVideoEvidenceCapture');
-              }}
-            />
-          )}
-
-          {activeTab === 'IssueBlockerReporting' && (
-            <IssueBlockerReportingScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('InstallationSopChecklist')}
-            />
-          )}
-
-          {activeTab === 'MaterialUsageLogging' && (
-            <MaterialUsageLoggingScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('InstallationSopChecklist')}
-            />
-          )}
-
-          {activeTab === 'QcInspectorAssignment' && (
-            <QcInspectorAssignmentScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('InstallationSopChecklist')}
-              onNavigateToMechanicalQc={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('QualityChecklistMechanical');
-              }}
-            />
-          )}
-
-          {activeTab === 'QualityChecklistMechanical' && (
-            <QualityChecklistMechanicalScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('QcInspectorAssignment')}
-              onNavigateToRework={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('DefectSnagList');
-              }}
-              onNavigateToElectricalQc={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('QualityChecklistElectrical');
-              }}
-            />
-          )}
-
-          {activeTab === 'QualityChecklistElectrical' && (
-            <QualityChecklistElectricalScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('QualityChecklistMechanical')}
-              onNavigateToComplianceCert={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('ComplianceCertification');
-              }}
-              onNavigateToSnagList={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('DefectSnagList');
-              }}
-            />
-          )}
-
-          {activeTab === 'ComplianceCertification' && (
-            <ComplianceCertificationScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('QualityChecklistElectrical')}
-              onNavigateToSnagList={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('DefectSnagList');
-              }}
-              onNavigateToHandover={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('FinalHandoverChecklist');
-              }}
-            />
-          )}
-
-          {activeTab === 'DefectSnagList' && (
-            <DefectSnagListScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('QualityChecklistElectrical')}
-              onNavigateToRework={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('ReworkAssignment');
-              }}
-              onNavigateToElectricalQc={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('QualityChecklistElectrical');
-              }}
-            />
-          )}
-
-          {activeTab === 'ReworkAssignment' && (
-            <ReworkAssignmentScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('DefectSnagList')}
-              onNavigateToSnagList={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('DefectSnagList');
-              }}
-              onNavigateToPartsRequest={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('IssueBlockerReporting');
-              }}
-            />
-          )}
-
-          {activeTab === 'FinalHandoverChecklist' && (
-            <FinalHandoverChecklistScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('ComplianceCertification')}
-              onNavigateToWalkthrough={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('CustomerHandoverWalkthrough');
-              }}
-              onNavigateToSnagList={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('DefectSnagList');
-              }}
-              onNavigateToComplianceCert={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('ComplianceCertification');
-              }}
-            />
-          )}
-
-          {activeTab === 'CustomerHandoverWalkthrough' && (
-            <CustomerHandoverWalkthroughScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('FinalHandoverChecklist')}
-              onNavigateToTimeline={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('InstallationProgressTimeline');
-              }}
-              onNavigateToWarranty={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('WarrantyAmcRegistration');
-              }}
-            />
-          )}
-
-          {activeTab === 'WarrantyAmcRegistration' && (
-            <WarrantyAmcRegistrationScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('CustomerHandoverWalkthrough')}
-              onNavigateToCertificate={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('HandoverCompletionCertificate');
-              }}
-              onNavigateToWalkthrough={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('CustomerHandoverWalkthrough');
-              }}
-            />
-          )}
-
-          {activeTab === 'HandoverCompletionCertificate' && (
-            <HandoverCompletionCertificateScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('WarrantyAmcRegistration')}
-              onNavigateToTimeline={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('InstallationProgressTimeline');
-              }}
-            />
-          )}
-
-          {activeTab === 'InstallationProgressTimeline' && (
-            <InstallationProgressTimelineScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('JobDetailSiteInfo')}
-              onNavigateToSop={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('InstallationSopChecklist');
-              }}
-              onNavigateToQcAssignment={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('QcInspectorAssignment');
-              }}
-            />
-          )}
-
-          {activeTab === 'TechnicianTeamCoordination' && (
-            <TechnicianTeamCoordinationScreen
-              user={currentUser}
-              jobId={selectedTechJobId || 'job_2026_101'}
-              onBack={() => setActiveTab('JobDetailSiteInfo')}
-              onNavigateToSop={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('InstallationSopChecklist');
-              }}
-            />
-          )}
-
-          {activeTab === 'RecruitmentLanding' && (
-            <RecruitmentLandingScreen
-              user={currentUser}
-              onNavigateToDataCollection={(appId) => {
-                setSelectedApplicantId(appId);
-                setActiveTab('ApplicantDataCollection');
-              }}
-              onNavigateToScreening={() => setActiveTab('ApplicantScreening')}
-              onNavigateToInterview={() => setActiveTab('InterviewScheduling')}
-              onNavigateToVerification={() => setActiveTab('BackgroundVerification')}
-              onNavigateToOffer={() => setActiveTab('OfferOnboardingAgreement')}
-              onNavigateToDashboard={() => setActiveTab('NewPartnerAggregationDashboard')}
-              onNavigateToTierAssignment={() => setActiveTab('PartnerTierCategoryAssignment')}
-              onNavigateToDirectory={() => setActiveTab('PartnerDirectory')}
-              onNavigateToExitScreen={(partnerId) => {
-                if (partnerId) setSelectedApplicantId(partnerId);
-                setActiveTab('PartnerDeactivationExit');
-              }}
-              onNavigateToTrainingLibrary={() => setActiveTab('TrainingModuleLibrary')}
-              onBack={() => setActiveTab('Home')}
-            />
-          )}
-
-          {activeTab === 'PartnerDirectory' && (
-            <PartnerDirectoryScreen
-              user={currentUser}
-              onNavigateToExitScreen={(partnerId) => {
-                setSelectedApplicantId(partnerId);
-                setActiveTab('PartnerDeactivationExit');
-              }}
-              onNavigateToTierAssignment={(partnerId) => {
-                setSelectedApplicantId(partnerId);
-                setActiveTab('PartnerTierCategoryAssignment');
-              }}
-              onBack={() => setActiveTab('RecruitmentLanding')}
-            />
-          )}
-
-          {activeTab === 'PartnerDeactivationExit' && (
-            <PartnerDeactivationExitScreen
-              user={currentUser}
-              partnerId={selectedApplicantId}
-              onNavigateToDirectory={() => setActiveTab('PartnerDirectory')}
-              onBack={() => setActiveTab('RecruitmentLanding')}
-            />
-          )}
-
-          {activeTab === 'TrainingModuleLibrary' && (
-            <TrainingModuleLibraryScreen
-              user={currentUser}
-              onOpenLesson={(modId, lesId) => {
-                setSelectedTrainingModuleId(modId);
-                setSelectedTrainingLessonId(lesId);
-                setActiveTab('VideoInteractiveLessonPlayer');
-              }}
-              onNavigateToSopRepo={() => setActiveTab('SopDocumentRepository')}
-              onNavigateToBadges={() => setActiveTab('CertificationBadgeProgress')}
-              onNavigateToSkillMatrix={() => setActiveTab('SkillMatrixGapAnalysis')}
-              onNavigateToComplianceTracker={() => setActiveTab('TrainingComplianceTracker')}
-              onNavigateToSopRollout={() => setActiveTab('NewSopRolloutNotification')}
-              onNavigateToFeedback={() => setActiveTab('TrainingFeedback')}
-              onBack={() => setActiveTab('RecruitmentLanding')}
-            />
-          )}
-
-          {activeTab === 'VideoInteractiveLessonPlayer' && (
-            <VideoInteractiveLessonPlayerScreen
-              user={currentUser}
-              trainingModuleId={selectedTrainingModuleId}
-              lessonId={selectedTrainingLessonId}
-              onNavigateToLibrary={() => setActiveTab('TrainingModuleLibrary')}
-              onLessonCompleted={(nextLessonId) => {
-                if (nextLessonId) {
-                  setSelectedTrainingLessonId(nextLessonId);
-                } else {
-                  setActiveTab('TrainingModuleLibrary');
-                }
-              }}
-            />
-          )}
-
-          {activeTab === 'SopDocumentRepository' && (
-            <SopDocumentRepositoryScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              onNavigateToQuiz={(assessId) => {
-                setSelectedAssessmentId(assessId);
-                setActiveTab('QuizCertificationTest');
-              }}
-              onNavigateToTrainingLibrary={() => setActiveTab('TrainingModuleLibrary')}
-              onBack={() => setActiveTab('TrainingModuleLibrary')}
-            />
-          )}
-
-          {activeTab === 'QuizCertificationTest' && (
-            <QuizCertificationTestScreen
-              assessmentId={selectedAssessmentId}
-              partnerId={currentUser.id}
-              currentLanguage={appLanguage}
-              onNavigateToBadges={() => setActiveTab('CertificationBadgeProgress')}
-              onBack={() => setActiveTab('TrainingModuleLibrary')}
-            />
-          )}
-
-          {activeTab === 'CertificationBadgeProgress' && (
-            <CertificationBadgeProgressScreen
-              partnerId={currentUser.id}
-              partnerName={currentUser.name}
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              onNavigateToQuiz={(assessId) => {
-                setSelectedAssessmentId(assessId);
-                setActiveTab('QuizCertificationTest');
-              }}
-              onNavigateToSopRepo={() => setActiveTab('SopDocumentRepository')}
-              onBack={() => setActiveTab('TrainingModuleLibrary')}
-            />
-          )}
-
-          {activeTab === 'SkillMatrixGapAnalysis' && (
-            <SkillMatrixGapAnalysisScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              onNavigateToTrainingModule={(modId) => {
-                setSelectedTrainingModuleId(modId);
-                setActiveTab('TrainingModuleLibrary');
-              }}
-              onNavigateToComplianceTracker={() => setActiveTab('TrainingComplianceTracker')}
-              onNavigateToSopRollout={() => setActiveTab('NewSopRolloutNotification')}
-              onBack={() => setActiveTab('TrainingModuleLibrary')}
-            />
-          )}
-
-          {activeTab === 'TrainingComplianceTracker' && (
-            <TrainingComplianceTrackerScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              onNavigateToSkillMatrix={() => setActiveTab('SkillMatrixGapAnalysis')}
-              onNavigateToSopRollout={() => setActiveTab('NewSopRolloutNotification')}
-              onNavigateToModule={(modId) => {
-                setSelectedTrainingModuleId(modId);
-                setActiveTab('TrainingModuleLibrary');
-              }}
-              onBack={() => setActiveTab('TrainingModuleLibrary')}
-            />
-          )}
-
-          {activeTab === 'NewSopRolloutNotification' && (
-            <NewSopRolloutNotificationScreen
-              userRole={currentUser.role}
-              partnerId={currentUser.id}
-              currentLanguage={appLanguage}
-              onNavigateToSopRepo={() => setActiveTab('SopDocumentRepository')}
-              onNavigateToQuiz={(quizId) => {
-                setSelectedAssessmentId(quizId);
-                setActiveTab('QuizCertificationTest');
-              }}
-              onBack={() => setActiveTab('TrainingModuleLibrary')}
-            />
-          )}
-
-          {activeTab === 'TrainingFeedback' && (
-            <TrainingFeedbackScreen
-              userRole={currentUser.role}
-              partnerId={currentUser.id}
-              partnerName={currentUser.name}
-              currentLanguage={appLanguage}
-              onNavigateToLibrary={() => setActiveTab('TrainingModuleLibrary')}
-              onBack={() => setActiveTab('TrainingModuleLibrary')}
-            />
-          )}
-
-          {activeTab === 'CommissionRulesEngine' && (
-            <CommissionRulesEngineScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              onNavigateToPayoutTracker={() => setActiveTab('StageWisePayoutTracker')}
-              onBack={() => setActiveTab('RecruitmentLanding')}
-            />
-          )}
-
-          {activeTab === 'StageWisePayoutTracker' && (
-            <StageWisePayoutTrackerScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              onNavigateToRulesEngine={() => setActiveTab('CommissionRulesEngine')}
-              onBack={() => setActiveTab('CommissionRulesEngine')}
-            />
-          )}
-
-          {activeTab === 'PayoutApprovalQueue' && (
-            <PayoutApprovalQueueScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              onNavigateToDisbursement={() => setActiveTab('AutomatedPayoutDisbursement')}
-              onNavigateToRulesEngine={() => setActiveTab('CommissionRulesEngine')}
-              onBack={() => setActiveTab('StageWisePayoutTracker')}
-            />
-          )}
-
-          {activeTab === 'AutomatedPayoutDisbursement' && (
-            <AutomatedPayoutDisbursementScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              onNavigateToApprovalQueue={() => setActiveTab('PayoutApprovalQueue')}
-              onBack={() => setActiveTab('PayoutApprovalQueue')}
-            />
-          )}
-
-          {activeTab === 'RewardsLeaderboard' && (
-            <RewardsLeaderboardScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onNavigateToPayoutTracker={() => setActiveTab('StageWisePayoutTracker')}
-              onBack={() => setActiveTab('StageWisePayoutTracker')}
-            />
-          )}
-
-          {activeTab === 'BadgesMilestones' && (
-            <BadgesMilestonesScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onNavigateToLeaderboard={() => setActiveTab('RewardsLeaderboard')}
-              onNavigateToTraining={() => setActiveTab('TrainingModuleCatalog')}
-              onBack={() => setActiveTab('StageWisePayoutTracker')}
-            />
-          )}
-
-          {activeTab === 'ContestConfiguration' && (
-            <ContestConfigurationScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              onNavigateToLeaderboard={() => setActiveTab('RewardsLeaderboard')}
-              onBack={() => setActiveTab('CommissionRulesEngine')}
-            />
-          )}
-
-          {activeTab === 'PayoutHistoryStatements' && (
-            <PayoutHistoryStatementsScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onNavigateToDisputeModal={(entryId) => {
-                setActiveTab('PayoutDisputeQuery');
-              }}
-              onNavigateToTdsStatement={() => setActiveTab('TaxDeductionStatement')}
-              onNavigateToDisputeQuery={() => setActiveTab('PayoutDisputeQuery')}
-              onBack={() => setActiveTab('StageWisePayoutTracker')}
-            />
-          )}
-
-          {activeTab === 'TaxDeductionStatement' && (
-            <TaxDeductionStatementScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('PayoutHistoryStatements')}
-            />
-          )}
-
-          {activeTab === 'PayoutDisputeQuery' && (
-            <PayoutDisputeQueryScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('PayoutHistoryStatements')}
-              onNavigateToRulesEngine={() => setActiveTab('CommissionRulesEngine')}
-            />
-          )}
-
-          {(activeTab === 'CustomerHomeDashboard' || activeTab === 'CustomerHome') && (
-            <CustomerHomeDashboardScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'ProjectStatusTracker' || activeTab === 'CustomerProjectStatusTracker') && (
-            <ProjectStatusTrackerScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('CustomerHomeDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'CustomerDocumentVault' || activeTab === 'SopDocumentRepository') && (
-            <CustomerDocumentVaultScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('CustomerHomeDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'CustomerPaymentInstallments' || activeTab === 'PaymentReceiptHistory') && (
-            <CustomerPaymentInstallmentsScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('CustomerHomeDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'CustomerSupportTicket' || activeTab === 'CustomerHandoverWalkthrough') && (
-            <CustomerSupportTicketScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('CustomerHomeDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'CustomerLiveSupportChat' || activeTab === 'LiveSupportChat') && (
-            <CustomerLiveSupportChatScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('CustomerHomeDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'CustomerFeedbackRating' || activeTab === 'CustomerFeedback') && (
-            <CustomerFeedbackRatingScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('CustomerHomeDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'CustomerAmcBooking' || activeTab === 'AmcBooking') && (
-            <CustomerAmcBookingScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('CustomerHomeDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'CustomerReferralProgram' || activeTab === 'CustomerReferrals' || activeTab === 'ReferralProgram') && (
-            <CustomerReferralProgramScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('CustomerHomeDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'CustomerNotificationCenter' || activeTab === 'CustomerNotifications' || activeTab === 'NotificationCenter') && (
-            <CustomerNotificationCenterScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('CustomerHomeDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'MasterAutomationRulesDashboard' || activeTab === 'AutomationRulesDashboard' || activeTab === 'MasterAutomationRules') && (
-            <MasterAutomationRulesDashboardScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('ExecutiveDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'WorkflowTriggerBuilder' || activeTab === 'TriggerBuilder' || activeTab === 'WorkflowBuilder') && (
-            <WorkflowTriggerBuilderScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('MasterAutomationRulesDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'NotificationTemplatesChannels' || activeTab === 'NotificationChannels' || activeTab === 'InternalNotificationTemplates') && (
-            <NotificationTemplatesChannelsScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('MasterAutomationRulesDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'EscalationMatrixConfig' || activeTab === 'EscalationMatrix' || activeTab === 'EscalationConfig') && (
-            <EscalationMatrixConfigScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('MasterAutomationRulesDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'SlaTimerBreachAlert' || activeTab === 'SlaTimers' || activeTab === 'SlaBreachAlerts') && (
-            <SlaTimerBreachAlertScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('MasterAutomationRulesDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'SystemHealthBotMonitoring' || activeTab === 'SystemHealth' || activeTab === 'TechnicalPlumbing') && (
-            <SystemHealthBotMonitoringScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('MasterAutomationRulesDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'AuditLogAutomatedActions' || activeTab === 'AutomatedActionAuditLog' || activeTab === 'AutomationAuditLog') && (
-            <AuditLogAutomatedActionsScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('MasterAutomationRulesDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'ManualOverrideConsole' || activeTab === 'ManualOverrideTerm' || activeTab === 'ProcessOverrideConsole') && (
-            <ManualOverrideConsoleScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('MasterAutomationRulesDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'ApiIntegrationManagement' || activeTab === 'ApiIntegration' || activeTab === 'IntegrationManagement') && (
-            <ApiIntegrationManagementScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('MasterAutomationRulesDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'AutomationTestingSandbox' || activeTab === 'AutomationSandbox' || activeTab === 'RuleSandbox') && (
-            <AutomationTestingSandboxScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('MasterAutomationRulesDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'CompanyProfileBrandingSettings' || activeTab === 'CompanyProfile' || activeTab === 'BrandingSettings' || activeTab === 'CompanyProfileSettings') && (
-            <CompanyProfileBrandingSettingsScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('SettingsMasterDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'UserRolePermissionManagement' || activeTab === 'UserPermissions' || activeTab === 'RolePermissions' || activeTab === 'PermissionsManagement') && (
-            <UserRolePermissionManagementScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('SettingsMasterDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'SinglePersonMonitorControlPanel' || activeTab === 'SinglePersonMonitor' || activeTab === 'SoloCompanyMonitor') && (
-            <SinglePersonMonitorControlPanelScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('SettingsMasterDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'DataPrivacyConsentManagement' || activeTab === 'DataPrivacy' || activeTab === 'ConsentManagement' || activeTab === 'GdprPrivacy') && (
-            <DataPrivacyConsentManagementScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('SettingsMasterDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'SecuritySessionManagement' || activeTab === 'SecuritySessions' || activeTab === 'SessionManagement' || activeTab === 'SecurityThreats') && (
-            <SecuritySessionManagementScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('SettingsMasterDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'BackupDataExport' || activeTab === 'DatabaseBackup' || activeTab === 'DataExport' || activeTab === 'DisasterRecovery') && (
-            <BackupDataExportScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('SettingsMasterDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'SaaSOpsSubscriptionBilling' || activeTab === 'SaaSBilling' || activeTab === 'SoftwareSubscriptions' || activeTab === 'SaaSExpenses') && (
-            <SaaSOpsSubscriptionBillingScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('SettingsMasterDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'LegalContractTemplatesRepository' || activeTab === 'LegalTemplates' || activeTab === 'ContractTemplates' || activeTab === 'StateLiftActs') && (
-            <LegalContractTemplatesRepositoryScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('SettingsMasterDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'HelpFaqSupport' || activeTab === 'HelpFAQ' || activeTab === 'KnowledgeBase' || activeTab === 'SupportDesk') && (
-            <HelpFaqSupportScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('SettingsMasterDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-          {(activeTab === 'AppVersionChangelogFeedback' || activeTab === 'AppVersion' || activeTab === 'Changelog' || activeTab === 'AppFeedback') && (
-            <AppVersionChangelogFeedbackScreen
-              userRole={currentUser.role}
-              currentLanguage={appLanguage}
-              currentUserId={currentUser.id}
-              onBack={() => setActiveTab('SettingsMasterDashboard')}
-              onNavigateTab={(tab, params) => setActiveTab(tab)}
-            />
-          )}
-
-
-
-
-
-
-
-          {activeTab === 'ApplicantDataCollection' && (
-            <ApplicantDataCollectionScreen
-              user={currentUser}
-              applicantId={selectedApplicantId || 'app_2026_01'}
-              onBack={() => setActiveTab('RecruitmentLanding')}
-              onComplete={(record) => {
-                setSelectedApplicantId(record.id);
-                setActiveTab('ApplicantScreening');
-              }}
-            />
-          )}
-
-          {activeTab === 'ApplicantScreening' && (
-            <ApplicantScreeningScreen
-              user={currentUser}
-              onNavigateToInterview={(appId) => {
-                setSelectedApplicantId(appId);
-                setActiveTab('InterviewScheduling');
-              }}
-              onNavigateToVerification={(appId) => {
-                setSelectedApplicantId(appId);
-                setActiveTab('BackgroundVerification');
-              }}
-              onBack={() => setActiveTab('RecruitmentLanding')}
-            />
-          )}
-
-          {activeTab === 'InterviewScheduling' && (
-            <InterviewSchedulingScreen
-              user={currentUser}
-              applicantId={selectedApplicantId || 'app_2026_01'}
-              onNavigateToVerification={(appId) => {
-                setSelectedApplicantId(appId);
-                setActiveTab('BackgroundVerification');
-              }}
-              onBack={() => setActiveTab('RecruitmentLanding')}
-            />
-          )}
-
-          {activeTab === 'BackgroundVerification' && (
-            <BackgroundVerificationScreen
-              user={currentUser}
-              applicantId={selectedApplicantId || 'app_2026_01'}
-              onNavigateToOffer={(appId) => {
-                setSelectedApplicantId(appId);
-                setActiveTab('OfferOnboardingAgreement');
-              }}
-              onBack={() => setActiveTab('RecruitmentLanding')}
-            />
-          )}
-
-          {activeTab === 'OfferOnboardingAgreement' && (
-            <OfferOnboardingAgreementScreen
-              user={currentUser}
-              applicantId={selectedApplicantId || 'app_2026_01'}
-              onNavigateToDashboard={() => setActiveTab('NewPartnerAggregationDashboard')}
-              onNavigateToTierAssignment={(partnerId) => {
-                setSelectedApplicantId(partnerId);
-                setActiveTab('PartnerTierCategoryAssignment');
-              }}
-              onBack={() => setActiveTab('RecruitmentLanding')}
-            />
-          )}
-
-          {activeTab === 'NewPartnerAggregationDashboard' && (
-            <NewPartnerAggregationDashboardScreen
-              user={currentUser}
-              onNavigateToApplicant={(appId) => {
-                setSelectedApplicantId(appId);
-                setActiveTab('ApplicantDataCollection');
-              }}
-              onNavigateToOffer={(appId) => {
-                setSelectedApplicantId(appId);
-                setActiveTab('OfferOnboardingAgreement');
-              }}
-              onNavigateToTierAssignment={(partnerId) => {
-                setSelectedApplicantId(partnerId);
-                setActiveTab('PartnerTierCategoryAssignment');
-              }}
-              onBack={() => setActiveTab('RecruitmentLanding')}
-            />
-          )}
-
-          {activeTab === 'PartnerTierCategoryAssignment' && (
-            <PartnerTierCategoryAssignmentScreen
-              user={currentUser}
-              partnerId={selectedApplicantId || 'app_2026_01'}
-              onNavigateToDashboard={() => setActiveTab('NewPartnerAggregationDashboard')}
-              onBack={() => setActiveTab('RecruitmentLanding')}
-            />
-          )}
-
-
-          {currentUser.role === 'admin' && activeTab === 'Settings' && (
-            <Card className="p-6 max-w-lg mx-auto text-center space-y-4">
-              <Settings className="w-12 h-12 text-antiquegold mx-auto" />
-              <h3 className="font-serif text-xl font-bold text-charcoal">Demo Control Center</h3>
-              <p className="text-sm text-warmgray">Manage seeded documents and simulation rules in LocalStorage database.</p>
-              <div className="pt-2 flex flex-col gap-2">
-                <Button variant="primary" onClick={() => {
-                  DbManager.resetToSeeds();
-                  alert('Database state has been successfully reset to raw seeds!');
-                }}>Reset Local DB to Raw Seeds</Button>
-                <Button variant="secondary" onClick={handleLogout}>Switch Role / Logout</Button>
-              </div>
-              {renderPreferencesSection()}
-            </Card>
-          )}
-
-          {currentUser.role === 'surveyor' && activeTab === 'Home' && <SurveyorDashboard user={currentUser} />}
-          {currentUser.role === 'surveyor' && activeTab === 'LeadFollowUp' && (
-            <LeadFollowUpScheduler user={currentUser} />
-          )}
-          {currentUser.role === 'surveyor' && activeTab === 'Incentives' && (
-            <Card className="p-6 space-y-4">
-              <div>
-                <h3 className="font-serif text-lg font-bold text-charcoal mb-1">Historical Commission Audits</h3>
-                <p className="text-xs text-warmgray">Commission ledger updated on each deal stage completion automatically.</p>
-              </div>
-
-              {currentUser.bankVerifiedStatus !== 'verified' && (
-                <div className="p-4 bg-error/10 border border-error/20 rounded-2xl text-error text-xs flex gap-3 text-left">
-                  <AlertTriangle className="w-5 h-5 shrink-0 text-error" />
-                  <div className="space-y-1">
-                    <p className="font-bold uppercase tracking-wider">Commission Payouts Blocked</p>
-                    <p className="text-error/90 leading-relaxed">
-                      Your bank account details have not cleared NPCI penny-drop verification. Under AIEC ledger protocols, commission payouts remain locked until verified bank credentials are provided. Please contact Mr. Prashant Wable to update bank parameters.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {DbManager.getLeads().filter(l => l.surveyorId === currentUser.id && l.stage === 'closed_won').map(l => (
-                  <div key={l.id} className="p-4 bg-alabaster rounded-xl border border-[rgba(184,135,61,0.1)] flex justify-between items-center">
-                    <div>
-                      <h4 className="font-bold text-sm text-charcoal">{l.contactInfo.name}</h4>
-                      <p className="text-xs text-warmgray">{l.buildingInfo.address}</p>
-                    </div>
-                    <span className="font-mono text-sm font-bold text-success">+₹{l.commissionEarned?.toLocaleString('en-IN') || '25,000'}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {currentUser.role === 'technician' && activeTab === 'Home' && (
-            <TechnicianHomeMyJobsScreen
-              user={currentUser}
-              onSelectJob={(jobId) => {
-                setSelectedTechJobId(jobId);
-                setActiveTab('JobDetailSiteInfo');
-              }}
-              onOpenSos={() => {
-                setActiveTab('SOSDesk');
-              }}
-            />
-          )}
-
-          {currentUser.role === 'customer' && activeTab === 'Home' && <CustomerDashboard user={currentUser} />}
-          {currentUser.role === 'customer' && activeTab === 'QuotePreview' && (
-            <QuotationPreview user={currentUser} />
-          )}
-          {currentUser.role === 'customer' && activeTab === 'QuoteNegotiationThread' && (
-            <LiveNegotiationThread user={currentUser} />
-          )}
-          {currentUser.role === 'customer' && activeTab === 'QuoteCompare' && (
-            <MultiOptionComparison user={currentUser} onSelectPackage={(tierId, finalPrice) => {
-              setActiveTab('QuotePreview');
-            }} />
-          )}
-          {currentUser.role === 'customer' && activeTab === 'QuoteDealTermsFinalization' && (
-            <DealTermsFinalization user={currentUser} />
-          )}
-          {currentUser.role === 'customer' && activeTab === 'QuoteDigitalContract' && (
-            <DigitalContractGenerator user={currentUser} />
-          )}
-          {currentUser.role === 'customer' && activeTab === 'QuoteESignature' && (
-            <ESignatureCapture user={currentUser} onGoToNext={() => setActiveTab('QuoteDealClosure')} />
-          )}
-          {currentUser.role === 'customer' && activeTab === 'QuoteDealClosure' && (
-            <DealClosureConfirmation user={currentUser} onBackToStart={() => setActiveTab('QuoteDigitalContract')} />
-          )}
-          {currentUser.role === 'customer' && activeTab === 'Settings' && (
-            <div className="space-y-6 max-w-lg mx-auto">
-              <Card className="p-6 text-center space-y-4">
-                <Sparkles className="w-12 h-12 text-antiquegold mx-auto animate-pulse" />
-                <h3 className="font-serif text-xl font-bold text-charcoal">Design Customizations</h3>
-                <p className="text-sm text-warmgray">Customize cabin wall finishes, LED light configurations, and handrails. These specs update the live construction SOP task timeline dynamically.</p>
-                <p className="text-xs italic text-antiquegold">Features arriving in next prompt updates...</p>
-              </Card>
-              <Card className="p-6">
-                {renderPreferencesSection()}
-              </Card>
-            </div>
-          )}
-
-          {(currentUser.role === 'surveyor' || currentUser.role === 'technician' || currentUser.role === 'supplier') && activeTab === 'Settings' && (
-            <Card className="p-6 max-w-lg mx-auto space-y-4">
-              <div className="text-center">
-                <Settings className="w-12 h-12 text-antiquegold mx-auto mb-2" />
-                <h3 className="font-serif text-xl font-bold text-charcoal">Partner Preferences</h3>
-                <p className="text-sm text-warmgray">Set up your localized mobility workbench options.</p>
-              </div>
-              {renderPreferencesSection()}
-              <div className="pt-2">
-                <Button variant="secondary" fullWidth onClick={handleLogout}>Log Out / Exit Partner Hub</Button>
-              </div>
-            </Card>
-          )}
-
-          {currentUser.role === 'supplier' && activeTab === 'Home' && <SupplierDashboard user={currentUser} />}
+          {currentUser.role === 'admin' && (
+            <AdminRouter {...routerProps} googleMapsApiKey={googleMapsApiKey} hasValidGoogleMapsKey={hasValidGoogleMapsKey} />
+          )}
+          {currentUser.role === 'technician' && <TechnicianRouter {...routerProps} />}
+          {currentUser.role === 'surveyor' && <SurveyorRouter {...routerProps} />}
+          {currentUser.role === 'customer' && <CustomerRouter {...routerProps} />}
+          {currentUser.role === 'supplier' && <SupplierRouter {...routerProps} />}
+          <SharedRoutes {...routerProps} />
         </motion.div>
       </AnimatePresence>
     );
@@ -2166,36 +544,21 @@ export default function App() {
         throw new Error('No user credentials returned from Google Sign-In.');
       }
 
-      const email = firebaseUser.email?.toLowerCase() || '';
-      const list = DbManager.getUsers();
-      
-      // Look for user with this email
-      let found = list.find(u => u.email?.toLowerCase() === email);
-      
-      // Auto-map Prashant Wable (Owner/Founder email) to the pre-seeded admin profile
-      if (!found && email === 'prashantashwable@gmail.com') {
-        found = list.find(u => u.id === 'admin_prashant');
-        if (found) {
-          found = { ...found, email };
-          DbManager.updateUser(found);
-        }
+      // Real sign-ins resolve their identity against Firestore (users/{uid}), not the
+      // local demo array, so the account and its role survive a refresh or new session.
+      const found = await getOrCreateFirestoreUser(firebaseUser);
+
+      // Mirror into the local array too, so this session's admin/staff views
+      // (which still read DbManager.getUsers()) can see this real user.
+      const mirroredUser: User = { ...found, isDemo: false };
+      const localList = DbManager.getUsers();
+      if (!localList.find(u => u.id === mirroredUser.id)) {
+        DbManager.addUser(mirroredUser);
+      } else {
+        DbManager.updateUser(mirroredUser);
       }
 
-      // If they are not found in the list, create a new user with pending selection role (Step 1-2 onboarding)
-      if (!found) {
-        found = {
-          id: `google_${firebaseUser.uid}`,
-          role: 'pending_selection' as any,
-          name: firebaseUser.displayName || 'Google User',
-          phone: firebaseUser.phoneNumber || '',
-          email: email,
-          status: 'pending',
-          avatarUrl: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-        };
-        DbManager.addUser(found);
-      }
-
-      setCurrentUser({ ...found, isDemo: false });
+      setCurrentUser(mirroredUser);
       if (rememberMe) {
         localStorage.setItem('aiec_session_token', `session_${found.id}`);
         localStorage.setItem('aiec_last_role_used', found.role);
@@ -2243,6 +606,8 @@ export default function App() {
     setOtpSent(false);
     setLoginPhone('');
     setOtpCode('');
+    setShowMobileMoreMenu(false);
+    setMobileNavSearch('');
     setOtp6Digits(Array(6).fill(''));
     setLoginEmail('');
     setLoginPassword('');
@@ -2548,6 +913,71 @@ export default function App() {
       default:
         return [{ id: 'Home', label: 'Overview', icon: LayoutDashboard }];
     }
+  };
+
+  // Localized nav labels, shared by the desktop sidebar, mobile bottom nav and mobile "More" menu
+  const TAB_LABEL_OVERRIDES: Record<string, { en: string; mr: string; hi: string }> = {
+    Home: { en: 'Overview', mr: 'मुख्य डॅशबोर्ड', hi: 'मुख्य डैशबोर्ड' },
+    LeadAssignment: { en: 'Lead Assignment', mr: 'लीड वाटप', hi: 'लीड असाइनमेंट' },
+    LeadMerge: { en: 'Merge Studio ⛓️', mr: 'विलीनीकरण स्टुडिओ ⛓️', hi: 'विलय स्टूडियो ⛓️' },
+    LeadScoring: { en: 'Lead Scoring 📈', mr: 'लीड स्कोअरिंग 📈', hi: 'लीड स्कोरिंग 📈' },
+    LeadFollowUp: { en: 'Follow-Ups 📅', mr: 'फॉलो-अप नियोजक 📅', hi: 'फॉलो-अप शेड्यूल 📅' },
+    LeadSource: { en: 'Source & Campaigns 📊', mr: 'स्त्रोत व मोहीम 📊', hi: 'स्रोत व अभियान 📊' },
+    LeadLost: { en: 'Disqualify Lead 🚨', mr: 'अयोग्य नियुक्त 🚨', hi: 'अयोग्य घोषित 🚨' },
+    LeadMigrate: { en: 'Bulk Import/Export 📊', mr: 'थोक आयात/निर्यात 📊', hi: 'थोक आयात/निर्यात 📊' },
+    CommTemplates: { en: 'Comm Templates 💬', mr: 'संप्रेषण टेम्पलेट्स 💬', hi: 'संचार टेम्प्लेट 💬' },
+    CommSequences: { en: 'Comm Sequences ⚙️', mr: 'संप्रेषण अनुक्रम ⚙️', hi: 'संचार अनुक्रम ⚙️' },
+    CommWhatsApp: { en: 'WhatsApp Console 💬', mr: 'व्हॉट्सॲप कन्सोल 💬', hi: 'व्हाट्सएप कंसोल 💬' },
+    CommCalls: { en: 'Auto-Dialer & Logs 📞', mr: 'ऑटो-डायल व लॉग्स 📞', hi: 'ऑटो-डायलिर व लॉग्स 📞' },
+    CommSMS: { en: 'SMS Broadcast ✉️', mr: 'एसएमएस ब्रॉडकास्ट ✉️', hi: 'एसएमएस प्रसारण ✉️' },
+    CommBot: { en: 'AI Bot Config 🤖', mr: 'एआय बोट सेटिंग्स 🤖', hi: 'एआई बोट सेटिंग्स 🤖' },
+    CommInbox: { en: 'Reply Inbox 📥', mr: 'उत्तर इनबॉक्स 📥', hi: 'उत्तर इनबॉक्स 📥' },
+    CommCompliance: { en: 'Compliance & DND 🛡️', mr: 'अनुपालन आणि डीएनडी 🛡️', hi: 'अनुपालन और डीएनडी 🛡️' },
+    QuotePreview: { en: 'Quote Preview 👁️', mr: 'कोट पूर्वावलोकन 👁️', hi: 'कोट पूर्वावलोकन 👁️' },
+    QuoteCompare: { en: 'Compare Packages ⚖️', mr: 'पॅकेज तुलना ⚖️', hi: 'पैकेज तुलना ⚖️' },
+    QuoteHistory: { en: 'Quote History ⏳', mr: 'आवृत्ती इतिहास ⏳', hi: 'संस्करण इतिहास ⏳' },
+    QuoteDiscount: { en: 'Discount Approval 🏷️', mr: 'सवलत आणि मंजुरी 🏷️', hi: 'छूट और अनुमोदन 🏷️' },
+    QuoteDelivery: { en: 'E-Delivery Hub 📨', mr: 'ई-वितरण केंद्र 📨', hi: 'ई-वितरण केंद्र 📨' },
+    QuoteAnalytics: { en: 'Quote Win/Loss 📈', mr: 'कोटेशन विश्लेषण 📈', hi: 'कोटेशन विश्लेषण 📈' },
+    QuotePricingRules: { en: 'Pricing & Margin ⚙️', mr: 'किंमत आणि नफा ⚙️', hi: 'मूल्य और मार्जिन ⚙️' },
+    QuoteNegotiationBot: { en: 'Negotiation Bot 🤖', mr: 'ऑटो-नेगोशिएशन बॉट 🤖', hi: 'ऑटो-नेगोशिएशन बोट 🤖' },
+    QuoteNegotiationThread: { en: 'Live Negotiation 💬', mr: 'थेट संभाषण 💬', hi: 'लाइव बातचीत 💬' },
+    QuoteCounterOfferApproval: { en: 'Counter Approvals ⚖️', mr: 'काउंटर मंजुरी ⚖️', hi: 'काउंटर स्वीकृतियां ⚖️' },
+    QuoteDealTermsFinalization: { en: 'Deal Finalization 🤝', mr: 'करार निश्चिती 🤝', hi: 'सौदा फाइनल 🤝' },
+    QuoteDigitalContract: { en: 'Contract Generator 📄', mr: 'करारनामा निर्माता 📄', hi: 'अनुबंध जनरेटर 📄' },
+    QuoteESignature: { en: 'E-Sign Capture ✍️', mr: 'ई-स्वाक्षरी रेकॉर्ड ✍️', hi: 'ई-हस्ताक्षर कैप्चर ✍️' },
+    QuoteDealClosure: { en: 'Deal Closure 🏆', mr: 'सौदा समाप्ती घोषणा 🏆', hi: 'सौदा बंद पुष्टिकरण 🏆' },
+    CommRules: { en: 'Stage Trigger Rules ⚙️', mr: 'स्टेज ट्रिगर नियम ⚙️', hi: 'स्टेज ट्रिगर नियम ⚙️' },
+    CommAnalytics: { en: 'Comm Analytics 📊', mr: 'संप्रेषण विश्लेषण 📊', hi: 'संचार विश्लेषण 📊' },
+    QuoteSpecs: { en: 'Quotation Specs ⚙️', mr: 'कोटेशन तपशील ⚙️', hi: 'कोटेशन विनिर्देश ⚙️' },
+    QuotePricing: { en: 'Cost & Profit 💰', mr: 'खर्च आणि नफा 💰', hi: 'लागत और लाभ 💰' },
+    QuoteBranding: { en: 'Quote Branding 🎨', mr: 'कोट ब्रँडिंग 🎨', hi: 'कोट ब्रांडिंग 🎨' },
+    LiveMap: { en: 'Live Operations', mr: 'थेट ऑपरेशन्स', hi: 'लाइव संचालन' },
+    RouteOpt: { en: 'Route Match 🗺️', mr: 'मार्ग जुळणी 🗺️', hi: 'रूट मैच 🗺️' },
+    SOSDesk: { en: 'SOS Desk 🚨', mr: 'तात्काळ डेस्क 🚨', hi: 'आपातकालीन डेस्क 🚨' },
+    LiveFeed: { en: 'Live Feed', mr: 'थेट फीड', hi: 'लाइव फीड' },
+    SurveyorAudit: { en: 'Surveyor Audit', mr: 'सर्वेक्षक ऑडिट', hi: 'सर्वेक्षक ऑडिट' },
+    TechnicianAudit: { en: 'Technician Audit', mr: 'तंत्रज्ञ ऑडिट', hi: 'तकनीशियन ऑडिट' },
+    Territories: { en: 'Territory Control', mr: 'प्रदेश नियंत्रण', hi: 'क्षेत्र नियंत्रण' },
+    Heatmap: { en: 'Lead Heatmap', mr: 'लीड हीटमॅप', hi: 'लीड हीटमैप' },
+    SiteVerify: { en: 'Geo-Verification', mr: 'भू-पडताळणी', hi: 'भू-सत्यापन' },
+    Funnel: { en: 'Sales Funnel', mr: 'विक्री फनेल', hi: 'बिक्री फ़नल' },
+    RevenueProfit: { en: 'Revenue & Profit', mr: 'महसूल आणि नफा', hi: 'राजस्व और लाभ' },
+    FinancialCashFlow: { en: 'Cash Flow & Aging 💵', mr: 'रोख प्रवाह आणि थकीत 💵', hi: 'नकदी प्रवाह व येन 💵' },
+    AlertsExceptions: { en: 'Exceptions & Alerts ⚠️', mr: 'अलर्ट आणि अपवाद ⚠️', hi: 'अलर्ट और अपवाद ⚠️' },
+    CustomReport: { en: 'Custom Report Builder 📊', mr: 'अहवाल निर्माता 📊', hi: 'रिपोर्ट निर्माता 📊' },
+    Leaderboard: { en: 'Worker Leaderboard 🏆', mr: 'कामगिरी रँकिंग 🏆', hi: 'प्रदर्शन सूचकांक 🏆' },
+    Conversion: { en: 'Region Conversions 📈', mr: 'प्रदेश रूपांतरण 📈', hi: 'क्षेत्र रूपांतरण 📈' },
+    SupplierScorecard: { en: 'Supplier SLA 🏆', mr: 'विक्रेता कामगिरी 🏆', hi: 'आपूर्तिकर्ता स्कोरकार्ड 🏆' },
+    AutomationHealth: { en: 'Automation Health ⚙️', mr: 'स्वयंचलित प्रणाली ⚙️', hi: 'स्वचालन नियंत्रण ⚙️' },
+    Partners: { en: 'Directory', mr: 'भागीदार निर्देशिका', hi: 'भागीदार निर्देशिका' },
+    Settings: { en: 'Control Unit', mr: 'नियंत्रण युनिट', hi: 'नियंत्रण इकाई' },
+  };
+
+  const getTabLabel = (tab: { id: string; label: string }): string => {
+    const override = TAB_LABEL_OVERRIDES[tab.id];
+    if (!override) return tab.label;
+    return override[appLanguage] || override.en;
   };
 
   return (
@@ -3737,66 +2167,7 @@ export default function App() {
                             }`}
                           >
                             <Icon className={`w-4 h-4 ${isSelected ? 'text-royalemerald' : 'text-warmgray'}`} />
-                            <span>{
-                              tab.id === 'Home' ? (appLanguage === 'hi' ? 'मुख्य डैशबोर्ड' : appLanguage === 'mr' ? 'मुख्य डॅशबोर्ड' : 'Overview') :
-                              tab.id === 'LeadAssignment' ? (appLanguage === 'hi' ? 'लीड असाइनमेंट' : appLanguage === 'mr' ? 'लीड वाटप' : 'Lead Assignment') :
-                              tab.id === 'LeadMerge' ? (appLanguage === 'hi' ? 'विलय स्टूडियो ⛓️' : appLanguage === 'mr' ? 'विलीनीकरण स्टुडिओ ⛓️' : 'Merge Studio ⛓️') :
-                              tab.id === 'LeadScoring' ? (appLanguage === 'hi' ? 'लीड स्कोरिंग 📈' : appLanguage === 'mr' ? 'लीड स्कोअरिंग 📈' : 'Lead Scoring 📈') :
-                              tab.id === 'LeadFollowUp' ? (appLanguage === 'hi' ? 'फॉलो-अप शेड्यूल 📅' : appLanguage === 'mr' ? 'फॉलो-अप नियोजक 📅' : 'Follow-Ups 📅') :
-                              tab.id === 'LeadSource' ? (appLanguage === 'hi' ? 'स्रोत व अभियान 📊' : appLanguage === 'mr' ? 'स्त्रोत व मोहीम 📊' : 'Source & Campaigns 📊') :
-                              tab.id === 'LeadLost' ? (appLanguage === 'hi' ? 'अयोग्य घोषित 🚨' : appLanguage === 'mr' ? 'अयोग्य नियुक्त 🚨' : 'Disqualify Lead 🚨') :
-                              tab.id === 'LeadMigrate' ? (appLanguage === 'hi' ? 'थोक आयात/निर्यात 📊' : appLanguage === 'mr' ? 'थोक आयात/निर्यात 📊' : 'Bulk Import/Export 📊') :
-                              tab.id === 'CommTemplates' ? (appLanguage === 'hi' ? 'संचार टेम्प्लेट 💬' : appLanguage === 'mr' ? 'संप्रेषण टेम्पलेट्स 💬' : 'Comm Templates 💬') :
-                              tab.id === 'CommSequences' ? (appLanguage === 'hi' ? 'संचार अनुक्रम ⚙️' : appLanguage === 'mr' ? 'संप्रेषण अनुक्रम ⚙️' : 'Comm Sequences ⚙️') :
-                              tab.id === 'CommWhatsApp' ? (appLanguage === 'hi' ? 'व्हाट्सएप कंसोल 💬' : appLanguage === 'mr' ? 'व्हॉट्सॲप कन्सोल 💬' : 'WhatsApp Console 💬') :
-                              tab.id === 'CommCalls' ? (appLanguage === 'hi' ? 'ऑटो-डायलिर व लॉग्स 📞' : appLanguage === 'mr' ? 'ऑटो-डायल व लॉग्स 📞' : 'Auto-Dialer & Logs 📞') :
-                              tab.id === 'CommSMS' ? (appLanguage === 'hi' ? 'एसएमएस प्रसारण ✉️' : appLanguage === 'mr' ? 'एसएमएस ब्रॉडकास्ट ✉️' : 'SMS Broadcast ✉️') :
-                              tab.id === 'CommBot' ? (appLanguage === 'hi' ? 'एआई बोट सेटिंग्स 🤖' : appLanguage === 'mr' ? 'एआय बोट सेटिंग्स 🤖' : 'AI Bot Config 🤖') :
-                              tab.id === 'CommInbox' ? (appLanguage === 'hi' ? 'उत्तर इनबॉक्स 📥' : appLanguage === 'mr' ? 'उत्तर इनबॉक्स 📥' : 'Reply Inbox 📥') :
-                              tab.id === 'CommCompliance' ? (appLanguage === 'hi' ? 'अनुपालन और डीएनडी 🛡️' : appLanguage === 'mr' ? 'अनुपालन आणि डीएनडी 🛡️' : 'Compliance & DND 🛡️') :
-                              tab.id === 'QuotePreview' ? (appLanguage === 'hi' ? 'कोट पूर्वावलोकन 👁️' : appLanguage === 'mr' ? 'कोट पूर्वावलोकन 👁️' : 'Quote Preview 👁️') :
-                              tab.id === 'QuoteCompare' ? (appLanguage === 'hi' ? 'पैकेज तुलना ⚖️' : appLanguage === 'mr' ? 'पॅकेज तुलना ⚖️' : 'Compare Packages ⚖️') :
-                              tab.id === 'QuoteHistory' ? (appLanguage === 'hi' ? 'संस्करण इतिहास ⏳' : appLanguage === 'mr' ? 'आवृत्ती इतिहास ⏳' : 'Quote History ⏳') :
-                              tab.id === 'QuoteDiscount' ? (appLanguage === 'hi' ? 'छूट और अनुमोदन 🏷️' : appLanguage === 'mr' ? 'सवलत आणि मंजुरी 🏷️' : 'Discount Approval 🏷️') :
-                              tab.id === 'QuoteDelivery' ? (appLanguage === 'hi' ? 'ई-वितरण केंद्र 📨' : appLanguage === 'mr' ? 'ई-वितरण केंद्र 📨' : 'E-Delivery Hub 📨') :
-                              tab.id === 'QuoteAnalytics' ? (appLanguage === 'hi' ? 'कोटेशन विश्लेषण 📈' : appLanguage === 'mr' ? 'कोटेशन विश्लेषण 📈' : 'Quote Win/Loss 📈') :
-                              tab.id === 'QuotePricingRules' ? (appLanguage === 'hi' ? 'मूल्य और मार्जिन ⚙️' : appLanguage === 'mr' ? 'किंमत आणि नफा ⚙️' : 'Pricing & Margin ⚙️') :
-                              tab.id === 'QuoteNegotiationBot' ? (appLanguage === 'hi' ? 'ऑटो-नेगोशिएशन बोट 🤖' : appLanguage === 'mr' ? 'ऑटो-नेगोशिएशन बॉट 🤖' : 'Negotiation Bot 🤖') :
-                              tab.id === 'QuoteNegotiationThread' ? (appLanguage === 'hi' ? 'लाइव बातचीत 💬' : appLanguage === 'mr' ? 'थेट संभाषण 💬' : 'Live Negotiation 💬') :
-                              tab.id === 'QuoteCounterOfferApproval' ? (appLanguage === 'hi' ? 'काउंटर स्वीकृतियां ⚖️' : appLanguage === 'mr' ? 'काउंटर मंजुरी ⚖️' : 'Counter Approvals ⚖️') :
-                              tab.id === 'QuoteDealTermsFinalization' ? (appLanguage === 'hi' ? 'सौदा फाइनल 🤝' : appLanguage === 'mr' ? 'करार निश्चिती 🤝' : 'Deal Finalization 🤝') :
-                              tab.id === 'QuoteDigitalContract' ? (appLanguage === 'hi' ? 'अनुबंध जनरेटर 📄' : appLanguage === 'mr' ? 'करारनामा निर्माता 📄' : 'Contract Generator 📄') :
-                              tab.id === 'QuoteESignature' ? (appLanguage === 'hi' ? 'ई-हस्ताक्षर कैप्चर ✍️' : appLanguage === 'mr' ? 'ई-स्वाक्षरी रेकॉर्ड ✍️' : 'E-Sign Capture ✍️') :
-                              tab.id === 'QuoteDealClosure' ? (appLanguage === 'hi' ? 'सौदा बंद पुष्टिकरण 🏆' : appLanguage === 'mr' ? 'सौदा समाप्ती घोषणा 🏆' : 'Deal Closure 🏆') :
-                              tab.id === 'CommRules' ? (appLanguage === 'hi' ? 'स्टेज ट्रिगर नियम ⚙️' : appLanguage === 'mr' ? 'स्टेज ट्रिगर नियम ⚙️' : 'Stage Trigger Rules ⚙️') :
-                              tab.id === 'CommAnalytics' ? (appLanguage === 'hi' ? 'संचार विश्लेषण 📊' : appLanguage === 'mr' ? 'संप्रेषण विश्लेषण 📊' : 'Comm Analytics 📊') :
-                              tab.id === 'QuoteSpecs' ? (appLanguage === 'hi' ? 'कोटेशन विनिर्देश ⚙️' : appLanguage === 'mr' ? 'कोटेशन तपशील ⚙️' : 'Quotation Specs ⚙️') :
-                              tab.id === 'QuotePricing' ? (appLanguage === 'hi' ? 'लागत और लाभ 💰' : appLanguage === 'mr' ? 'खर्च आणि नफा 💰' : 'Cost & Profit 💰') :
-                           tab.id === 'QuoteBranding' ? (appLanguage === 'hi' ? 'कोट ब्रांडिंग 🎨' : appLanguage === 'mr' ? 'कोट ब्रँडिंग 🎨' : 'Branding 🎨') :
-                           tab.id === 'QuoteBranding' ? (appLanguage === 'hi' ? 'कोट ब्रांडिंग 🎨' : appLanguage === 'mr' ? 'कोट ब्रँडिंग 🎨' : 'Branding 🎨') :
-                              tab.id === 'QuoteBranding' ? (appLanguage === 'hi' ? 'कोट ब्रांडिंग 🎨' : appLanguage === 'mr' ? 'कोट ब्रँडिंग 🎨' : 'Quote Branding 🎨') :
-                              tab.id === 'LiveMap' ? (appLanguage === 'hi' ? 'लाइव संचालन' : appLanguage === 'mr' ? 'थेट ऑपरेशन्स' : 'Live Operations') :
-                              tab.id === 'RouteOpt' ? (appLanguage === 'hi' ? 'रूट मैच 🗺️' : appLanguage === 'mr' ? 'मार्ग जुळणी 🗺️' : 'Route Match 🗺️') :
-                              tab.id === 'SOSDesk' ? (appLanguage === 'hi' ? 'आपातकालीन डेस्क 🚨' : appLanguage === 'mr' ? 'तात्काळ डेस्क 🚨' : 'SOS Desk 🚨') :
-                              tab.id === 'LiveFeed' ? (appLanguage === 'hi' ? 'लाइव फीड' : appLanguage === 'mr' ? 'थेट फीड' : 'Live Feed') :
-                              tab.id === 'SurveyorAudit' ? (appLanguage === 'hi' ? 'सर्वेक्षक ऑडिट' : appLanguage === 'mr' ? 'सर्वेक्षक ऑडिट' : 'Surveyor Audit') :
-                              tab.id === 'TechnicianAudit' ? (appLanguage === 'hi' ? 'तकनीशियन ऑडिट' : appLanguage === 'mr' ? 'तंत्रज्ञ ऑडिट' : 'Technician Audit') :
-                              tab.id === 'Territories' ? (appLanguage === 'hi' ? 'क्षेत्र नियंत्रण' : appLanguage === 'mr' ? 'प्रदेश नियंत्रण' : 'Territory Control') :
-                              tab.id === 'Heatmap' ? (appLanguage === 'hi' ? 'लीड हीटमैप' : appLanguage === 'mr' ? 'लीड हीटमॅप' : 'Lead Heatmap') :
-                              tab.id === 'SiteVerify' ? (appLanguage === 'hi' ? 'भू-सत्यापन' : appLanguage === 'mr' ? 'भू-पडताळणी' : 'Geo-Verification') :
-                              tab.id === 'Funnel' ? (appLanguage === 'hi' ? 'बिक्री फ़नल' : appLanguage === 'mr' ? 'विक्री फनेल' : 'Sales Funnel') :
-                              tab.id === 'RevenueProfit' ? (appLanguage === 'hi' ? 'राजस्व और लाभ' : appLanguage === 'mr' ? 'महसूल आणि नफा' : 'Revenue & Profit') :
-                              tab.id === 'FinancialCashFlow' ? (appLanguage === 'hi' ? 'नकदी प्रवाह व येन 💵' : appLanguage === 'mr' ? 'रोख प्रवाह आणि थकीत 💵' : 'Cash Flow & Aging 💵') :
-                              tab.id === 'AlertsExceptions' ? (appLanguage === 'hi' ? 'अलर्ट और अपवाद ⚠️' : appLanguage === 'mr' ? 'अलर्ट आणि अपवाद ⚠️' : 'Exceptions & Alerts ⚠️') :
-                              tab.id === 'CustomReport' ? (appLanguage === 'hi' ? 'रिपोर्ट निर्माता 📊' : appLanguage === 'mr' ? 'अहवाल निर्माता 📊' : 'Custom Report Builder 📊') :
-                              tab.id === 'Leaderboard' ? (appLanguage === 'hi' ? 'प्रदर्शन सूचकांक 🏆' : appLanguage === 'mr' ? 'कामगिरी रँकिंग 🏆' : 'Worker Leaderboard 🏆') :
-                              tab.id === 'Conversion' ? (appLanguage === 'hi' ? 'क्षेत्र रूपांतरण 📈' : appLanguage === 'mr' ? 'प्रदेश रूपांतरण 📈' : 'Region Conversions 📈') :
-                              tab.id === 'SupplierScorecard' ? (appLanguage === 'hi' ? 'आपूर्तिकर्ता स्कोरकार्ड 🏆' : appLanguage === 'mr' ? 'विक्रेता कामगिरी 🏆' : 'Supplier SLA 🏆') :
-                              tab.id === 'AutomationHealth' ? (appLanguage === 'hi' ? 'स्वचालन नियंत्रण ⚙️' : appLanguage === 'mr' ? 'स्वयंचलित प्रणाली ⚙️' : 'Automation Health ⚙️') :
-                              tab.id === 'Partners' ? (appLanguage === 'hi' ? 'भागीदार निर्देशिका' : appLanguage === 'mr' ? 'भागीदार निर्देशिका' : 'Directory') :
-                              tab.id === 'Settings' ? (appLanguage === 'hi' ? 'नियंत्रण इकाई' : appLanguage === 'mr' ? 'नियंत्रण युनिट' : 'Control Unit') :
-                              tab.label
-                            }</span>
+                            <span>{getTabLabel(tab)}</span>
                           </button>
                         );
                       })}
@@ -3861,78 +2232,112 @@ export default function App() {
 
                 {/* 3. SCROLLABLE SCREEN STAGE CONTENT AREA */}
                 <main className="flex-1 overflow-y-auto p-4 md:p-8 max-w-7xl mx-auto w-full pb-24 md:pb-8">
-                  {hasValidGoogleMapsKey ? (
-                    <APIProvider apiKey={googleMapsApiKey} version="weekly">
-                      {renderTabContent()}
-                    </APIProvider>
-                  ) : (
-                    renderTabContent()
-                  )}
+                  {renderTabContent()}
                 </main>
 
-                {/* 4. MOBILE BOTTOM TAB NAVIGATION */}
-                <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[rgba(184,135,61,0.12)] py-2 flex justify-around items-center z-40 shadow-lg">
-                  {getTabsByRole(currentUser.role).map((tab) => {
-                    const Icon = tab.icon;
-                    const isSelected = activeTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                          isSelected ? 'text-royalemerald scale-110' : 'text-warmgray'
-                        }`}
+                {/* 4. MOBILE BOTTOM TAB NAVIGATION (curated primary tabs + "More" for everything else) */}
+                {(() => {
+                  const allTabs = getTabsByRole(currentUser.role);
+                  const needsMore = allTabs.length > 5;
+                  const primaryTabs = needsMore ? allTabs.slice(0, 4) : allTabs;
+                  return (
+                    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[rgba(184,135,61,0.12)] py-2 flex justify-around items-center z-40 shadow-lg">
+                      {primaryTabs.map((tab) => {
+                        const Icon = tab.icon;
+                        const isSelected = activeTab === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex flex-col items-center gap-1 cursor-pointer transition-all min-w-0 px-1 ${
+                              isSelected ? 'text-royalemerald scale-110' : 'text-warmgray'
+                            }`}
+                          >
+                            <Icon className="w-5 h-5 shrink-0" />
+                            <span className="text-[9px] font-bold truncate max-w-[64px]">{getTabLabel(tab)}</span>
+                          </button>
+                        );
+                      })}
+                      {needsMore && (
+                        <button
+                          onClick={() => setShowMobileMoreMenu(true)}
+                          className={`flex flex-col items-center gap-1 cursor-pointer transition-all min-w-0 px-1 ${
+                            showMobileMoreMenu || !primaryTabs.some(t => t.id === activeTab) ? 'text-royalemerald' : 'text-warmgray'
+                          }`}
+                        >
+                          <Grid className="w-5 h-5 shrink-0" />
+                          <span className="text-[9px] font-bold">More</span>
+                        </button>
+                      )}
+                    </nav>
+                  );
+                })()}
+
+                {/* 5. MOBILE "MORE" MENU — every screen for this role, searchable (bottom nav can't hold 100+ items) */}
+                <AnimatePresence>
+                  {showMobileMoreMenu && (
+                    <>
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => { setShowMobileMoreMenu(false); setMobileNavSearch(''); }}
+                        className="md:hidden fixed inset-0 z-[110] bg-charcoal/30 backdrop-blur-xs"
+                      />
+                      <motion.div
+                        initial={{ y: '100%' }}
+                        animate={{ y: 0 }}
+                        exit={{ y: '100%' }}
+                        transition={{ type: 'tween', duration: 0.25 }}
+                        className="md:hidden fixed inset-x-0 bottom-0 z-[111] bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[80vh]"
                       >
-                        <Icon className="w-5 h-5" />
-                        <span className="text-[9px] font-bold">{
-                          tab.id === 'Home' ? (appLanguage === 'hi' ? 'मुख्य डैशबोर्ड' : appLanguage === 'mr' ? 'मुख्य डॅशबोर्ड' : 'Overview') :
-                          tab.id === 'LeadFollowUp' ? (appLanguage === 'hi' ? 'फॉलो-अप 📅' : appLanguage === 'mr' ? 'फॉलो-अप 📅' : 'Follow-Ups 📅') :
-                          tab.id === 'LeadSource' ? (appLanguage === 'hi' ? 'स्रोत व अभियान' : appLanguage === 'mr' ? 'स्त्रोत व मोहीम' : 'Attribution 📊') :
-                          tab.id === 'LeadLost' ? (appLanguage === 'hi' ? 'अयोग्य 🚨' : appLanguage === 'mr' ? 'अयोग्य 🚨' : 'Disqualify 🚨') :
-                          tab.id === 'LeadMigrate' ? (appLanguage === 'hi' ? 'थोक माइग्रेट 📊' : appLanguage === 'mr' ? 'थोक स्थलांतर 📊' : 'Migration 📊') :
-                          tab.id === 'CommTemplates' ? (appLanguage === 'hi' ? 'टेम्प्लेट 💬' : appLanguage === 'mr' ? 'टेम्पलेट्स 💬' : 'Templates 💬') :
-                          tab.id === 'CommSequences' ? (appLanguage === 'hi' ? 'अनुक्रम ⚙️' : appLanguage === 'mr' ? 'अनुक्रम ⚙️' : 'Sequences ⚙️') :
-                          tab.id === 'CommWhatsApp' ? (appLanguage === 'hi' ? 'व्हाट्सएप 💬' : appLanguage === 'mr' ? 'व्हॉट्सॲप 💬' : 'WhatsApp 💬') :
-                          tab.id === 'CommCalls' ? (appLanguage === 'hi' ? 'कॉल लॉग्स 📞' : appLanguage === 'mr' ? 'कॉल लॉग्स 📞' : 'Call Logs 📞') :
-                          tab.id === 'CommSMS' ? (appLanguage === 'hi' ? 'एसएमएस ✉️' : appLanguage === 'mr' ? 'एसएमएस ✉️' : 'SMS ✉️') :
-                          tab.id === 'CommBot' ? (appLanguage === 'hi' ? 'एआई बोट 🤖' : appLanguage === 'mr' ? 'एआय बोट 🤖' : 'AI Bot 🤖') :
-                          tab.id === 'CommInbox' ? (appLanguage === 'hi' ? 'इनबॉक्स 📥' : appLanguage === 'mr' ? 'इनबॉक्स 📥' : 'Inbox 📥') :
-                          tab.id === 'CommCompliance' ? (appLanguage === 'hi' ? 'अनुपालन 🛡️' : appLanguage === 'mr' ? 'अनुपालन 🛡️' : 'Compliance 🛡️') :
-                          tab.id === 'CommRules' ? (appLanguage === 'hi' ? 'ट्रिगर नियम ⚙️' : appLanguage === 'mr' ? 'ट्रिगर नियम ⚙️' : 'Rules ⚙️') :
-                          tab.id === 'CommAnalytics' ? (appLanguage === 'hi' ? 'विश्लेषण 📊' : appLanguage === 'mr' ? 'विश्लेषण 📊' : 'Analytics 📊') :
-                          tab.id === 'QuoteSpecs' ? (appLanguage === 'hi' ? 'विनिर्देश ⚙️' : appLanguage === 'mr' ? 'तपशील ⚙️' : 'Specs ⚙️') :
-                          tab.id === 'QuotePricing' ? (appLanguage === 'hi' ? 'लागत और लाभ 💰' : appLanguage === 'mr' ? 'खर्च आणि नफा 💰' : 'Cost & Profit 💰') :
-                          tab.id === 'QuotePreview' ? (appLanguage === 'hi' ? 'कोट पूर्वावलोकन 👁️' : appLanguage === 'mr' ? 'कोट पूर्वावलोकन 👁️' : 'Quote Preview 👁️') :
-                          tab.id === 'QuoteCompare' ? (appLanguage === 'hi' ? 'तुलना ⚖️' : appLanguage === 'mr' ? 'तुलना ⚖️' : 'Compare ⚖️') :
-                          tab.id === 'QuoteHistory' ? (appLanguage === 'hi' ? 'इतिहास ⏳' : appLanguage === 'mr' ? 'इतिहास ⏳' : 'History ⏳') :
-                          tab.id === 'QuoteDiscount' ? (appLanguage === 'hi' ? 'छूट 🏷️' : appLanguage === 'mr' ? 'सवलत 🏷️' : 'Discount 🏷️') :
-                          tab.id === 'QuoteDelivery' ? (appLanguage === 'hi' ? 'ई-वितरण 📨' : appLanguage === 'mr' ? 'ई-वितरण 📨' : 'E-Delivery 📨') :
-                          tab.id === 'QuoteAnalytics' ? (appLanguage === 'hi' ? 'विश्लेषण 📈' : appLanguage === 'mr' ? 'विश्लेषण 📈' : 'Analytics 📈') :
-                          tab.id === 'QuotePricingRules' ? (appLanguage === 'hi' ? 'मूल्य नियम ⚙️' : appLanguage === 'mr' ? 'किंमत नियम ⚙️' : 'Pricing Rules ⚙️') :
-                          tab.id === 'LiveMap' ? (appLanguage === 'hi' ? 'लाइव संचालन' : appLanguage === 'mr' ? 'थेट ऑपरेशन्स' : 'Live Operations') :
-                          tab.id === 'RouteOpt' ? (appLanguage === 'hi' ? 'रूट मैच 🗺️' : appLanguage === 'mr' ? 'मार्ग जुळणी 🗺️' : 'Route Match 🗺️') :
-                          tab.id === 'SOSDesk' ? (appLanguage === 'hi' ? 'आपातकालीन डेस्क 🚨' : appLanguage === 'mr' ? 'तात्काळ डेस्क 🚨' : 'SOS Desk 🚨') :
-                          tab.id === 'LiveFeed' ? (appLanguage === 'hi' ? 'लाइव फीड' : appLanguage === 'mr' ? 'थेट फीड' : 'Live Feed') :
-                          tab.id === 'SurveyorAudit' ? (appLanguage === 'hi' ? 'सर्वेक्षक ऑडिट' : appLanguage === 'mr' ? 'सर्वेक्षक ऑडिट' : 'Surveyor Audit') :
-                          tab.id === 'TechnicianAudit' ? (appLanguage === 'hi' ? 'तकनीशियन ऑडिट' : appLanguage === 'mr' ? 'तंत्रज्ञ ऑडिट' : 'Technician Audit') :
-                          tab.id === 'Territories' ? (appLanguage === 'hi' ? 'क्षेत्र नियंत्रण' : appLanguage === 'mr' ? 'प्रदेश नियंत्रण' : 'Territory Control') :
-                          tab.id === 'Heatmap' ? (appLanguage === 'hi' ? 'लीड हीटमैप' : appLanguage === 'mr' ? 'लीड हीटमॅप' : 'Lead Heatmap') :
-                          tab.id === 'SiteVerify' ? (appLanguage === 'hi' ? 'भू-सत्यापन' : appLanguage === 'mr' ? 'भू-पडताळणी' : 'Geo-Verification') :
-                          tab.id === 'Funnel' ? (appLanguage === 'hi' ? 'बिक्री फ़नल' : appLanguage === 'mr' ? 'विक्री फनेल' : 'Sales Funnel') :
-                          tab.id === 'RevenueProfit' ? (appLanguage === 'hi' ? 'राजस्व और लाभ' : appLanguage === 'mr' ? 'महसूल आणि नफा' : 'Revenue & Profit') :
-                           tab.id === 'FinancialCashFlow' ? (appLanguage === 'hi' ? 'नकदी प्रवाह 💵' : appLanguage === 'mr' ? 'रोख प्रवाह 💵' : 'Cash Flow 💵') :
-                          tab.id === 'Leaderboard' ? (appLanguage === 'hi' ? 'प्रदर्शन सूचकांक' : appLanguage === 'mr' ? 'कामगिरी रँकिंग' : 'Performance') :
-                          tab.id === 'Conversion' ? (appLanguage === 'hi' ? 'रूपांतरण 📈' : appLanguage === 'mr' ? 'रूपांतरण 📈' : 'Conversions 📈') :
-                          tab.id === 'SupplierScorecard' ? (appLanguage === 'hi' ? 'आपूर्तिकर्ता 🏆' : appLanguage === 'mr' ? 'विक्रेता 🏆' : 'Supplier SLA 🏆') :
-                          tab.id === 'AutomationHealth' ? (appLanguage === 'hi' ? 'स्वचालन ⚙️' : appLanguage === 'mr' ? 'ऑटोमेशन ⚙️' : 'Automation ⚙️') :
-                          tab.id === 'Partners' ? (appLanguage === 'hi' ? 'भागीदार निर्देशिका' : appLanguage === 'mr' ? 'भागीदार निर्देशिका' : 'Directory') :
-                          tab.id === 'Settings' ? (appLanguage === 'hi' ? 'नियंत्रण इकाई' : appLanguage === 'mr' ? 'नियंत्रण युनिट' : 'Control Unit') :
-                          tab.label
-                        }</span>
-                      </button>
-                    );
-                  })}
-                </nav>
+                        <div className="w-12 h-1.5 bg-[#e5dfd4] rounded-full mx-auto mt-3 mb-2 shrink-0" />
+                        <div className="px-4 pb-3 flex items-center justify-between shrink-0">
+                          <h3 className="font-serif text-base font-bold text-charcoal">All Screens ({getTabsByRole(currentUser.role).length})</h3>
+                          <button onClick={() => { setShowMobileMoreMenu(false); setMobileNavSearch(''); }} className="p-1.5 rounded-lg hover:bg-alabaster text-warmgray">
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                        <div className="px-4 pb-3 shrink-0">
+                          <div className="relative">
+                            <Search className="w-4 h-4 text-warmgray absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input
+                              type="text"
+                              value={mobileNavSearch}
+                              onChange={(e) => setMobileNavSearch(e.target.value)}
+                              placeholder="Search screens..."
+                              className="w-full bg-[#F8F6F1] border border-[rgba(184,135,61,0.15)] rounded-xl pl-9 pr-3 py-2.5 text-sm focus:ring-1 focus:ring-antiquegold focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto px-4 pb-8 grid grid-cols-3 gap-2">
+                          {getTabsByRole(currentUser.role)
+                            .filter(tab => getTabLabel(tab).toLowerCase().includes(mobileNavSearch.toLowerCase()))
+                            .map((tab) => {
+                              const Icon = tab.icon;
+                              const isSelected = activeTab === tab.id;
+                              return (
+                                <button
+                                  key={tab.id}
+                                  onClick={() => {
+                                    setActiveTab(tab.id);
+                                    setShowMobileMoreMenu(false);
+                                    setMobileNavSearch('');
+                                  }}
+                                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl text-center cursor-pointer transition-all ${
+                                    isSelected ? 'bg-[#0E4B3D]/10 text-royalemerald' : 'bg-[#F8F6F1] text-warmgray hover:bg-alabaster'
+                                  }`}
+                                >
+                                  <Icon className={`w-5 h-5 shrink-0 ${isSelected ? 'text-royalemerald' : 'text-warmgray'}`} />
+                                  <span className="text-[10px] font-bold leading-tight line-clamp-2">{getTabLabel(tab)}</span>
+                                </button>
+                              );
+                            })}
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
 
               </div>
             )}

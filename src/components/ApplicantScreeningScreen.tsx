@@ -382,11 +382,11 @@ export const ApplicantScreeningScreen: React.FC<ApplicantScreeningScreenProps> =
                     </div>
 
                     <div className="mt-2 pt-2 border-t border-[var(--color-border)] flex items-center justify-between text-[11px] text-[var(--color-text-secondary)]">
-                      <span className="flex items-center gap-1 truncate max-w-[200px]">
+                      <span className="flex items-center gap-1 truncate max-w-[200px] min-w-0">
                         <MapPin className="w-3 h-3 text-[var(--color-accent-primary)] shrink-0" />
                         {app.territoryPreferences ? app.territoryPreferences.slice(0, 2).join(', ') : 'No zone preference'}
                       </span>
-                      <span className="font-semibold capitalize text-[var(--color-accent-secondary)]">
+                      <span className="font-semibold capitalize text-[var(--color-accent-secondary)] shrink-0">
                         {app.status.replace('_', ' ')}
                       </span>
                     </div>

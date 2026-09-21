@@ -18,6 +18,11 @@ try {
   console.warn("Could not load firebase-applet-config.json:", e);
 }
 
+// The project's actual Firestore database is a named (non-default) database,
+// per firebase-applet-config.json. getFirestore(app) alone connects to the
+// "(default)" database, which this project never provisioned.
+const FIRESTORE_DATABASE_ID = 'ai-studio-buildit-6201e806-4162-4565-b05c-8c48e796f933';
+
 let app;
 let db: any = null;
 let auth: any = null;
@@ -25,7 +30,7 @@ let auth: any = null;
 if (firebaseConfig) {
   try {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-    db = getFirestore(app);
+    db = getFirestore(app, FIRESTORE_DATABASE_ID);
     auth = getAuth(app);
   } catch (error) {
     console.error("Failed to initialize Firebase services:", error);

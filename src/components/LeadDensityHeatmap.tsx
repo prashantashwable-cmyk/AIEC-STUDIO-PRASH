@@ -1,25 +1,42 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  APIProvider, 
-  Map, 
-  AdvancedMarker 
-} from '@vis.gl/react-google-maps';
-import { 
-  Flame, MapPin, TrendingUp, TrendingDown, Info, Calendar, Layers, 
-  Globe, Sparkles, CheckCircle2, Search, Filter, Database, ArrowRight, 
-  ChevronRight, RefreshCw, AlertCircle, Activity, LayoutDashboard
+import { MapContainer, TileLayer, Marker, Circle, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.heat';
+import {
+  Flame, MapPin, TrendingUp, TrendingDown, Info, Calendar, Layers,
+  Globe, Sparkles, CheckCircle2, Search, Filter, Database, ArrowRight,
+  ChevronRight, RefreshCw, AlertCircle, Activity, LayoutDashboard,
+  Maximize2, Minimize2
 } from 'lucide-react';
 import { DbManager } from '../lib/db';
 import { User, Lead, Deal } from '../types';
 import { Card, Button } from './Common';
 
-const API_KEY =
-  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-  (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
-  (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
-  '';
-const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
+// Imperative Leaflet heat-layer bridge (leaflet.heat has no native react-leaflet component)
+const HeatLayer: React.FC<{ points: [number, number, number][] }> = ({ points }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (!points.length) return;
+    const heatLayer = (L as any).heatLayer(points, { radius: 30, blur: 22, maxZoom: 15 }).addTo(map);
+    return () => {
+      map.removeLayer(heatLayer);
+    };
+  }, [map, points]);
+  return null;
+};
+
+// Leaflet caches its container size at init; toggling fullscreen resizes the container
+// via CSS without firing a window resize event, so we must tell the map explicitly.
+const MapResizeHandler: React.FC<{ trigger: unknown }> = ({ trigger }) => {
+  const map = useMap();
+  useEffect(() => {
+    const t = setTimeout(() => map.invalidateSize(), 120);
+    return () => clearTimeout(t);
+  }, [trigger, map]);
+  return null;
+};
 
 interface HeatmapZone {
   id: string;
@@ -34,11 +51,11 @@ interface HeatmapZone {
   coverageStartDate?: string; // For pre-coverage edge case
 }
 
-export const LeadDensityHeatmap: React.FC<{ 
+export const LeadDensityHeatmap: React.FC<{
   user: User;
   apiKey?: string;
   hasValidKey?: boolean;
-}> = ({ user, apiKey, hasValidKey }) => {
+}> = ({ user }) => {
   // Database data
   const [leads, setLeads] = useState<Lead[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -56,18 +73,20 @@ export const LeadDensityHeatmap: React.FC<{
   const [isRefreshingBatch, setIsRefreshingBatch] = useState(false);
   const [batchSyncedTime, setBatchSyncedTime] = useState<string>('08:00 AM Today');
 
-  // Map settings (Dual mode - defaulted to google)
-  const [mapMode, setMapMode] = useState<'vector' | 'google'>(hasValidKey ? 'google' : 'vector');
-  const [showKeyInfo, setShowKeyInfo] = useState(false);
+  // Map settings: 'street' uses free OpenStreetMap tiles (no key/billing needed)
+  const [mapMode, setMapMode] = useState<'vector' | 'street'>('street');
 
+  // Fullscreen map view (CSS-based overlay, works even where the browser Fullscreen API is blocked, e.g. in an iframe)
+  const [isFullscreen, setIsFullscreen] = useState(false);
   useEffect(() => {
-    if (hasValidKey) {
-      setMapMode('google');
-    } else {
-      setMapMode('vector');
-    }
-  }, [hasValidKey]);
-  
+    if (!isFullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isFullscreen]);
+
   // Vector map panning/zoom state (Pune coordinate space)
   const [zoom, setZoom] = useState(1.1);
   const [pan, setPan] = useState({ x: -20, y: -40 });
@@ -381,9 +400,25 @@ export const LeadDensityHeatmap: React.FC<{
     }
   });
 
+  // Real per-lead heat points for the leaflet.heat layer, weighted by recency within the selected range
+  const heatPoints: [number, number, number][] = leads
+    .filter(l => isDateInSelectedRange(l.createdAt))
+    .map(l => [l.buildingInfo.latitude || 18.5204, l.buildingInfo.longitude || 73.8567, 0.6] as [number, number, number]);
+
+  const zoneIcon = (z: HeatmapZone, count: number) => L.divIcon({
+    html: `
+      <div class="flex flex-col items-center cursor-pointer">
+        <div class="px-2 py-0.5 bg-white border border-charcoal/10 rounded-md text-[9px] font-bold shadow-sm whitespace-nowrap">${z.name.split(' ')[0]} (${count})</div>
+      </div>
+    `,
+    className: '',
+    iconSize: [90, 20],
+    iconAnchor: [45, -6],
+  });
+
   return (
     <div className="space-y-6 flex flex-col h-full relative font-sans">
-      
+
       {/* 1. TOP HEADER STRIP AND CONTROLLERS */}
       <div className="bg-white p-4 rounded-2xl border border-[rgba(184,135,61,0.15)] shadow-sm space-y-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -515,8 +550,20 @@ export const LeadDensityHeatmap: React.FC<{
         {/* ==========================================
             LEFT PANEL: THE MAP WITH HEAT OVERLAYS
             ========================================== */}
-        <div className="flex-1 h-[500px] sm:h-[550px] lg:h-full rounded-2xl overflow-hidden border border-[rgba(184,135,61,0.2)] bg-white relative flex flex-col shadow-inner min-h-[400px]">
-          
+        <div className={isFullscreen
+          ? "fixed inset-0 z-[200] bg-white flex flex-col"
+          : "flex-1 h-[500px] sm:h-[550px] lg:h-full rounded-2xl overflow-hidden border border-[rgba(184,135,61,0.2)] bg-white relative flex flex-col shadow-inner min-h-[400px]"
+        }>
+
+          {/* FULLSCREEN TOGGLE */}
+          <button
+            onClick={() => setIsFullscreen(prev => !prev)}
+            title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+            className="absolute bottom-20 left-4 z-10 p-2 bg-white/95 hover:bg-white rounded-xl backdrop-blur-md shadow-sm border border-[rgba(184,135,61,0.12)] text-charcoal transition-all"
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+
           {/* MAP MODE CONTROLLERS */}
           <div className="absolute top-4 left-4 z-10 flex gap-1 bg-white/95 p-1 rounded-xl backdrop-blur-md shadow-sm border border-[rgba(184,135,61,0.12)]">
             <button
@@ -528,54 +575,15 @@ export const LeadDensityHeatmap: React.FC<{
               🗺️ Vector Sandbox
             </button>
             <button
-              onClick={() => {
-                if (!hasValidKey) {
-                  setShowKeyInfo(true);
-                } else {
-                  setMapMode('google');
-                }
-              }}
+              onClick={() => setMapMode('street')}
               className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-widest transition-all flex items-center gap-1 ${
-                mapMode === 'google' ? 'bg-royalemerald text-white' : 'text-warmgray hover:text-charcoal'
+                mapMode === 'street' ? 'bg-royalemerald text-white' : 'text-warmgray hover:text-charcoal'
               }`}
             >
               <Globe className="w-3 h-3" />
-              G-Maps Satellite
+              Live Street Map
             </button>
           </div>
-
-          {/* SATELLITE API KEY INFO */}
-          {showKeyInfo && (
-            <div className="absolute inset-0 z-30 bg-[#F8F6F1]/95 flex flex-col items-center justify-center p-6 text-center text-charcoal animate-fadeIn">
-              <div className="max-w-md bg-white p-6 rounded-3xl border border-[rgba(184,135,61,0.22)] shadow-2xl space-y-4">
-                <div className="w-12 h-12 bg-[#B8873D]/10 text-[#B8873D] rounded-full flex items-center justify-center mx-auto animate-bounce">
-                  <Globe className="w-6 h-6 stroke-[1.5]" />
-                </div>
-                <h3 className="font-serif text-lg font-bold text-charcoal">Google Maps Platform Required</h3>
-                <p className="text-xs text-warmgray leading-relaxed">
-                  Genuine Google Satellite Heatmap widgets require a valid Google Maps Platform Web SDK credentials.
-                </p>
-                <div className="bg-[#F8F6F1] p-3 rounded-xl text-left text-[11px] space-y-2 border border-[#e5dfd4] font-mono text-warmgray">
-                  <p className="font-bold text-charcoal">To configure:</p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li>Settings Gear (⚙️ top-right) → Secrets</li>
-                    <li>Add secret: <code className="bg-white px-1 py-0.5 rounded border font-bold text-royalemerald">GOOGLE_MAPS_PLATFORM_KEY</code></li>
-                  </ul>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="secondary" className="flex-1 py-2 text-xs" onClick={() => setShowKeyInfo(false)}>
-                    <span>Cancel</span>
-                  </Button>
-                  <Button variant="primary" className="flex-1 py-2 text-xs" onClick={() => {
-                    setShowKeyInfo(false);
-                    setMapMode('vector'); // Stay in sandbox
-                  }}>
-                    <span>Use Sandbox Map</span>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ZOOM CONTROLS */}
           <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1.5 bg-white p-1 rounded-xl shadow-md border border-[rgba(184,135,61,0.12)]">
@@ -618,59 +626,53 @@ export const LeadDensityHeatmap: React.FC<{
           </div>
 
           {/* MAP ENGINE RENDERERS */}
-          {mapMode === 'google' ? (
+          {mapMode === 'street' ? (
             <div className="absolute inset-0 w-full h-full z-0">
-              {!apiKey ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#FAF9F5] space-y-4">
-                  <div className="w-8 h-8 border-4 border-royalemerald border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs text-warmgray font-medium tracking-wide">Initializing satellite terrain engine...</p>
-                </div>
-              ) : (
-                <Map
-                  defaultCenter={{ lat: mapCenterLat, lng: mapCenterLng }}
-                  defaultZoom={11.5}
-                  mapId="AIEC_HQ_HEATMAP"
-                  internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
-                  style={{ width: '100%', height: '100%' }}
-                >
-                  {/* Render Google Maps Advanced Markers as circular heat hubs */}
-                  {zones.map(z => {
-                    const stats = getZoneDensityMetric(z);
-                    const level = getDensityLevel(stats.density, z.isNew);
-                    const style = getIntensityStyle(level);
-                    const isSelected = selectedZoneId === z.id;
+              <MapContainer
+                center={[mapCenterLat, mapCenterLng]}
+                zoom={11.5}
+                style={{ width: '100%', height: '100%' }}
+                scrollWheelZoom={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapResizeHandler trigger={isFullscreen} />
 
-                    return (
-                      <AdvancedMarker
-                        key={`g-heat-hub-${z.id}`}
-                        position={{ lat: z.lat, lng: z.lng }}
-                        onClick={() => setSelectedZoneId(z.id)}
-                      >
-                        <div className="flex flex-col items-center cursor-pointer">
-                          {/* Radial Glow representing intensity */}
-                          <div 
-                            className={`rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                              isSelected ? 'scale-110 shadow-lg border-white' : 'border-white/40 shadow-xs'
-                            }`}
-                            style={{
-                              width: `${z.radiusKm * 18}px`,
-                              height: `${z.radiusKm * 18}px`,
-                              backgroundColor: style.fill,
-                              opacity: isSelected ? 0.6 : 0.4,
-                              boxShadow: `0 0 25px 5px ${style.glowColor}`
-                            }}
-                          >
-                            <Flame className="w-4 h-4 text-white shrink-0 opacity-80" />
-                          </div>
-                          <div className="mt-1 px-2 py-0.5 bg-white border border-charcoal/10 rounded-md text-[9px] font-bold shadow-sm whitespace-nowrap">
-                            {z.name.split(' ')[0]} ({stats.count})
-                          </div>
-                        </div>
-                      </AdvancedMarker>
-                    );
-                  })}
-                </Map>
-              )}
+                {/* Real point-density heat layer (leaflet.heat) over actual lead coordinates */}
+                <HeatLayer points={heatPoints} />
+
+                {/* Zone selection circles + labels, scaled/colored by density */}
+                {zones.map(z => {
+                  const stats = getZoneDensityMetric(z);
+                  const level = getDensityLevel(stats.density, z.isNew);
+                  const style = getIntensityStyle(level);
+                  const isSelected = selectedZoneId === z.id;
+
+                  return (
+                    <React.Fragment key={`s-zone-${z.id}`}>
+                      <Circle
+                        center={[z.lat, z.lng]}
+                        radius={z.radiusKm * 1000}
+                        pathOptions={{
+                          color: style.fill,
+                          weight: isSelected ? 3 : 1,
+                          fillColor: style.fill,
+                          fillOpacity: isSelected ? 0.25 : 0.12,
+                          dashArray: z.isNew ? '4 4' : undefined,
+                        }}
+                        eventHandlers={{ click: () => setSelectedZoneId(z.id) }}
+                      />
+                      <Marker
+                        position={[z.lat, z.lng]}
+                        icon={zoneIcon(z, stats.count)}
+                        eventHandlers={{ click: () => setSelectedZoneId(z.id) }}
+                      />
+                    </React.Fragment>
+                  );
+                })}
+              </MapContainer>
             </div>
           ) : (
             

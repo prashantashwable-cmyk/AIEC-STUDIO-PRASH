@@ -631,11 +631,11 @@ export const WhatsAppBusinessChatConsole: React.FC<{ user: any }> = ({ user }) =
                     )}
 
                     <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-serif text-sm font-black text-charcoal truncate max-w-[180px]">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="font-serif text-sm font-black text-charcoal truncate max-w-[180px] min-w-0">
                           {conv.clientName}
                         </h4>
-                        <span className="text-[9px] font-mono font-bold text-warmgray">{conv.lastTimestamp}</span>
+                        <span className="text-[9px] font-mono font-bold text-warmgray shrink-0">{conv.lastTimestamp}</span>
                       </div>
 
                       <p className="text-[10px] text-antiquegold font-mono truncate">
@@ -788,9 +788,9 @@ export const WhatsAppBusinessChatConsole: React.FC<{ user: any }> = ({ user }) =
                         {/* Media attachment display */}
                         {msg.mediaUrl && (
                           <div className="mt-2 p-2 bg-white rounded-xl border border-[#e5dfd4] flex items-center justify-between gap-3 shadow-2xs">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
                               <FileText className="w-5 h-5 text-antiquegold shrink-0" />
-                              <div>
+                              <div className="min-w-0">
                                 <span className="block text-[10px] font-bold text-charcoal truncate max-w-[160px]">
                                   {msg.mediaName || "Attachment"}
                                 </span>
@@ -799,7 +799,7 @@ export const WhatsAppBusinessChatConsole: React.FC<{ user: any }> = ({ user }) =
                                 </span>
                               </div>
                             </div>
-                            <Button variant="outline" className="py-0.5 px-2 text-[9px] font-bold">
+                            <Button variant="outline" className="py-0.5 px-2 text-[9px] font-bold shrink-0">
                               View File
                             </Button>
                           </div>
