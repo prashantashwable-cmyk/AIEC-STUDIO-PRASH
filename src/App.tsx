@@ -171,6 +171,12 @@ export default function App() {
     };
   }, []);
 
+  // Real (non-demo) sessions subscribe DbManager's Leads API to Firestore;
+  // demo sessions (or no session) keep it 100% local. See DbManager.setSessionMode.
+  useEffect(() => {
+    DbManager.setSessionMode(currentUser);
+  }, [currentUser?.id, currentUser?.isDemo]);
+
   const renderTabContent = () => {
     if (!currentUser) return null;
     const routerProps = {
