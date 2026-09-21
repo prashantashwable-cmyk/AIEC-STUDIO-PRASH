@@ -333,9 +333,9 @@ export const SupplierOrderStatusTracking: React.FC<SupplierOrderStatusTrackingPr
                             {po.lineItems.length} Component(s):
                           </div>
                           {po.lineItems.map((li, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-[10px] font-mono">
-                              <span className="text-charcoal/80 truncate max-w-[120px]">{li.itemName}</span>
-                              <span className="text-charcoal/50">x{li.quantity}</span>
+                            <div key={idx} className="flex justify-between items-center gap-2 text-[10px] font-mono">
+                              <span className="text-charcoal/80 truncate max-w-[120px] min-w-0">{li.itemName}</span>
+                              <span className="text-charcoal/50 shrink-0">x{li.quantity}</span>
                             </div>
                           ))}
                         </div>

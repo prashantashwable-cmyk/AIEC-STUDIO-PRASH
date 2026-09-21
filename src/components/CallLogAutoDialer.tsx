@@ -558,13 +558,13 @@ export const CallLogAutoDialer: React.FC<{ user: any }> = ({ user }) => {
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
+                      <div className="space-y-1 min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <h4 className="font-serif text-sm font-black text-charcoal truncate max-w-[160px]">
                             {call.leadName}
                           </h4>
                           {call.attemptsCount > 1 && (
-                            <span className="text-[9px] font-mono font-black bg-red-50 text-red-700 px-1.5 py-0.5 rounded border border-red-100">
+                            <span className="text-[9px] font-mono font-black bg-red-50 text-red-700 px-1.5 py-0.5 rounded border border-red-100 shrink-0">
                               RETRY #{call.attemptsCount}
                             </span>
                           )}

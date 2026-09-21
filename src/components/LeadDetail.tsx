@@ -925,18 +925,18 @@ export const LeadDetail: React.FC<{
                 {attachments.map((doc, idx) => (
                   <div 
                     key={idx}
-                    className="p-3 bg-white border border-[rgba(184,135,61,0.12)] rounded-xl flex items-center justify-between hover:bg-alabaster/30 transition-all"
+                    className="p-3 bg-white border border-[rgba(184,135,61,0.12)] rounded-xl flex items-center justify-between gap-2 hover:bg-alabaster/30 transition-all"
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <FileText className="w-5 h-5 text-antiquegold shrink-0" />
-                      <div className="text-left">
+                      <div className="text-left min-w-0">
                         <span className="text-xs font-bold text-charcoal block truncate max-w-[200px]">{doc.name}</span>
                         <span className="text-[10px] font-mono text-warmgray">{doc.size} • Uploaded {doc.date}</span>
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => triggerToast(`Downloading secure attachment node: ${doc.name}`)}
-                      className="text-xs text-antiquegold hover:text-charcoal font-bold font-mono px-2.5 py-1.5 rounded-lg hover:bg-alabaster transition-all"
+                      className="text-xs text-antiquegold hover:text-charcoal font-bold font-mono px-2.5 py-1.5 rounded-lg hover:bg-alabaster transition-all shrink-0"
                     >
                       Download 📥
                     </button>

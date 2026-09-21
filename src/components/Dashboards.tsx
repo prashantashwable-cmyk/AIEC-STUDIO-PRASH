@@ -7448,8 +7448,8 @@ export const SurveyorDashboard: React.FC<{ user: User }> = ({ user }) => {
 
                       {sitePhotos.front ? (
                         <div className="mt-3.5 flex gap-4 items-center">
-                          <img src={sitePhotos.front.dataUrl} className="w-32 h-20 object-cover rounded-xl border border-border" alt="Front view watermark draft" />
-                          <div className="space-y-1 text-[10px] font-mono text-warmgray">
+                          <img src={sitePhotos.front.dataUrl} className="w-32 h-20 object-cover rounded-xl border border-border shrink-0" alt="Front view watermark draft" />
+                          <div className="space-y-1 text-[10px] font-mono text-warmgray min-w-0">
                             <p className="text-charcoal font-bold flex items-center gap-1">
                               {sitePhotos.front.isLive ? <span className="text-success">🟢 Secure Live Shutter</span> : <span className="text-error">⚠️ Imported Non-Live File</span>}
                             </p>
@@ -7518,8 +7518,8 @@ export const SurveyorDashboard: React.FC<{ user: User }> = ({ user }) => {
 
                       {sitePhotos.entrance ? (
                         <div className="mt-3.5 flex gap-4 items-center">
-                          <img src={sitePhotos.entrance.dataUrl} className="w-32 h-20 object-cover rounded-xl border border-border" alt="Entrance watermarked draft" />
-                          <div className="space-y-1 text-[10px] font-mono text-warmgray">
+                          <img src={sitePhotos.entrance.dataUrl} className="w-32 h-20 object-cover rounded-xl border border-border shrink-0" alt="Entrance watermarked draft" />
+                          <div className="space-y-1 text-[10px] font-mono text-warmgray min-w-0">
                             <p className="text-charcoal font-bold flex items-center gap-1">
                               {sitePhotos.entrance.isLive ? <span className="text-success">🟢 Secure Live Shutter</span> : <span className="text-error">⚠️ Imported Non-Live File</span>}
                             </p>
@@ -7588,8 +7588,8 @@ export const SurveyorDashboard: React.FC<{ user: User }> = ({ user }) => {
 
                       {sitePhotos.landmark ? (
                         <div className="mt-3.5 flex gap-4 items-center">
-                          <img src={sitePhotos.landmark.dataUrl} className="w-32 h-20 object-cover rounded-xl border border-border" alt="Landmark watermarked draft" />
-                          <div className="space-y-1 text-[10px] font-mono text-warmgray">
+                          <img src={sitePhotos.landmark.dataUrl} className="w-32 h-20 object-cover rounded-xl border border-border shrink-0" alt="Landmark watermarked draft" />
+                          <div className="space-y-1 text-[10px] font-mono text-warmgray min-w-0">
                             <p className="text-charcoal font-bold flex items-center gap-1">
                               {sitePhotos.landmark.isLive ? <span className="text-success">🟢 Secure Live Shutter</span> : <span className="text-error">⚠️ Imported Non-Live File</span>}
                             </p>

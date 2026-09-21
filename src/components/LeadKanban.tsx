@@ -717,9 +717,9 @@ export const LeadKanban: React.FC<{ user: UserType; onBackToInbox?: () => void }
                             </div>
 
                             {/* Contact Person */}
-                            <div className="flex items-center gap-1.5 text-warmgray text-[10px] font-medium">
-                              <User className="w-3 h-3 text-warmgray" />
-                              <span className="truncate max-w-[140px]">{lead.contactInfo.name}</span>
+                            <div className="flex items-center gap-1.5 text-warmgray text-[10px] font-medium min-w-0">
+                              <User className="w-3 h-3 text-warmgray shrink-0" />
+                              <span className="truncate max-w-[140px] min-w-0">{lead.contactInfo.name}</span>
                             </div>
 
                             {/* Elevator technical spec tag */}

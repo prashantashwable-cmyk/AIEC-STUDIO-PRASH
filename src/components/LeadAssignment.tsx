@@ -719,7 +719,7 @@ export const LeadAssignment: React.FC<{ user: User; onBack?: () => void }> = ({ 
                   <div className="flex items-center gap-4 shrink-0 w-full md:w-auto pt-2.5 md:pt-0 border-t md:border-t-0 border-dashed border-border/60">
                     
                     {/* Current Assignee avatar or unassigned status */}
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-10 h-10 rounded-full border border-border/80 overflow-hidden bg-alabaster flex items-center justify-center shrink-0">
                         {currentOwner?.avatarUrl ? (
                           <img src={currentOwner.avatarUrl} alt={currentOwner.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
@@ -727,7 +727,7 @@ export const LeadAssignment: React.FC<{ user: User; onBack?: () => void }> = ({ 
                           <HelpCircle className="w-5 h-5 text-warmgray" />
                         )}
                       </div>
-                      <div className="space-y-0.5">
+                      <div className="space-y-0.5 min-w-0">
                         <span className="text-[8px] uppercase tracking-wider font-mono font-black text-warmgray block">
                           Current Owner
                         </span>
@@ -956,9 +956,9 @@ export const LeadAssignment: React.FC<{ user: User; onBack?: () => void }> = ({ 
                 </p>
                 <div className="max-h-24 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin text-[10px] text-warmgray">
                   {leads.filter(l => selectedLeadIds.includes(l.id)).map(l => (
-                    <div key={l.id} className="flex justify-between border-b border-border/40 py-1">
-                      <span className="font-bold text-charcoal truncate max-w-[150px]">{l.contactInfo.name}</span>
-                      <span>(Floors: {l.buildingInfo.floors})</span>
+                    <div key={l.id} className="flex justify-between gap-2 border-b border-border/40 py-1">
+                      <span className="font-bold text-charcoal truncate max-w-[150px] min-w-0">{l.contactInfo.name}</span>
+                      <span className="shrink-0">(Floors: {l.buildingInfo.floors})</span>
                     </div>
                   ))}
                 </div>

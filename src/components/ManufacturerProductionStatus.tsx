@@ -424,7 +424,7 @@ export const ManufacturerProductionStatus: React.FC<ManufacturerProductionStatus
                       rec.stageEvidenceUploads.map((up) => (
                         <div key={up.id} className="p-2 bg-background rounded-xl border border-gold/15 text-[11px] flex items-center gap-2">
                           <FileText className="w-3.5 h-3.5 text-royalemerald shrink-0" />
-                          <div className="truncate max-w-[160px]">
+                          <div className="truncate max-w-[160px] min-w-0">
                             <span className="font-bold text-charcoal block truncate">{up.fileName}</span>
                             <span className="text-[9px] text-charcoal/50 font-mono">{up.stageName} • {up.uploadedBy}</span>
                           </div>

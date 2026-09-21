@@ -1041,7 +1041,7 @@ export const LeadMergeResolution: React.FC<{ user: User; onBack?: () => void }> 
                               fieldPreferences.address === 'Alpha' ? 'border-antiquegold bg-antiquegold/5 text-charcoal font-bold' : 'border-border/60 text-warmgray bg-white'
                             }`}
                           >
-                            <span className="truncate max-w-[150px]">{alpha.buildingInfo.address}</span>
+                            <span className="truncate max-w-[150px] min-w-0">{alpha.buildingInfo.address}</span>
                             {fieldPreferences.address === 'Alpha' && <Check className="w-3.5 h-3.5 text-antiquegold shrink-0" />}
                           </button>
                           <button
@@ -1050,7 +1050,7 @@ export const LeadMergeResolution: React.FC<{ user: User; onBack?: () => void }> 
                               fieldPreferences.address === 'Beta' ? 'border-antiquegold bg-antiquegold/5 text-charcoal font-bold' : 'border-border/60 text-warmgray bg-white'
                             }`}
                           >
-                            <span className="truncate max-w-[150px]">{beta.buildingInfo.address}</span>
+                            <span className="truncate max-w-[150px] min-w-0">{beta.buildingInfo.address}</span>
                             {fieldPreferences.address === 'Beta' && <Check className="w-3.5 h-3.5 text-antiquegold shrink-0" />}
                           </button>
                         </div>

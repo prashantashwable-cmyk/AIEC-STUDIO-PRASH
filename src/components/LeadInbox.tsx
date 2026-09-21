@@ -1435,9 +1435,9 @@ export const LeadInbox: React.FC<{ user: User }> = ({ user }) => {
                       <span className="text-warmgray font-semibold">Contact Phone</span>
                       <span className="font-mono font-bold text-charcoal">{activeLead.contactInfo.phone}</span>
                     </div>
-                    <div className="flex justify-between items-center text-xs py-2.5">
-                      <span className="text-warmgray font-semibold">Email</span>
-                      <span className="font-bold text-charcoal text-right truncate max-w-[180px]">{activeLead.contactInfo.email || "No email"}</span>
+                    <div className="flex justify-between items-center gap-2 text-xs py-2.5">
+                      <span className="text-warmgray font-semibold shrink-0">Email</span>
+                      <span className="font-bold text-charcoal text-right truncate max-w-[180px] min-w-0">{activeLead.contactInfo.email || "No email"}</span>
                     </div>
                     {activeLead.contactInfo.companyName && (
                       <div className="flex justify-between items-center text-xs py-2.5">

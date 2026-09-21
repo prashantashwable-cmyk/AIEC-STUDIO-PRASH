@@ -349,10 +349,10 @@ export const ReworkAssignmentScreen: React.FC<ReworkAssignmentScreenProps> = ({
                       {item.title}
                     </h3>
 
-                    <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)]">
-                      <div className="flex items-center gap-1">
-                        <UserCheck className="w-3.5 h-3.5 text-[var(--color-accent-primary)]" />
-                        <span className="truncate max-w-[140px]">{item.assignedTechnicianName}</span>
+                    <div className="flex items-center justify-between gap-2 text-xs text-[var(--color-text-secondary)]">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <UserCheck className="w-3.5 h-3.5 text-[var(--color-accent-primary)] shrink-0" />
+                        <span className="truncate max-w-[140px] min-w-0">{item.assignedTechnicianName}</span>
                       </div>
                       <span className={`capitalize font-medium ${
                         item.status === 'pending_qc_reverification' ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'
