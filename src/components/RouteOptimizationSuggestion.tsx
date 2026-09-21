@@ -3,13 +3,24 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Compass, MapPin, CheckCircle2, AlertTriangle, User, Users, ShieldAlert,
   ArrowRight, Sparkles, Plus, Clock, Search, Filter, Shield, Info, Settings,
-  AlertCircle, RefreshCw, Star, Battery, HelpCircle
+  AlertCircle, RefreshCw, Star, Battery, HelpCircle, Maximize2, Minimize2
 } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { DbManager } from '../lib/db';
 import { User as UserType, Lead, Job } from '../types';
+
+// Leaflet caches its container size at init; toggling fullscreen resizes the container
+// via CSS without firing a window resize event, so we must tell the map explicitly.
+const MapResizeHandler: React.FC<{ trigger: unknown }> = ({ trigger }) => {
+  const map = useMap();
+  useEffect(() => {
+    const t = setTimeout(() => map.invalidateSize(), 120);
+    return () => clearTimeout(t);
+  }, [trigger, map]);
+  return null;
+};
 
 interface RouteOptimizationSuggestionProps {
   user: UserType;
@@ -62,6 +73,18 @@ export function RouteOptimizationSuggestion({ user }: RouteOptimizationSuggestio
 
   // Map settings: 'street' uses free OpenStreetMap tiles (no key/billing needed)
   const [mapMode, setMapMode] = useState<'street' | 'vector'>('street');
+
+  // Fullscreen map view (CSS-based overlay, works even where the browser Fullscreen API is blocked, e.g. in an iframe)
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isFullscreen]);
+
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
@@ -660,15 +683,18 @@ export function RouteOptimizationSuggestion({ user }: RouteOptimizationSuggestio
         <div className="lg:col-span-8 flex flex-col space-y-4">
           
           {/* MAP CANVAS GRID */}
-          <div className="bg-white rounded-3xl border border-[rgba(184,135,61,0.15)] h-[320px] relative overflow-hidden shadow-xs flex flex-col">
-            
+          <div className={isFullscreen
+            ? "fixed inset-0 z-[200] bg-white flex flex-col"
+            : "bg-white rounded-3xl border border-[rgba(184,135,61,0.15)] h-[320px] relative overflow-hidden shadow-xs flex flex-col"
+          }>
+
             {/* MAP MODE CHIP CONTROLLERS */}
             <div className="absolute top-4 left-4 z-30 flex gap-1 bg-white/95 p-1 rounded-xl backdrop-blur-md shadow-sm border border-[rgba(184,135,61,0.12)]">
               <button
                 onClick={() => setMapMode('vector')}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest transition-all ${
-                  mapMode === 'vector' 
-                    ? 'bg-[#B8873D] text-white font-bold' 
+                  mapMode === 'vector'
+                    ? 'bg-[#B8873D] text-white font-bold'
                     : 'text-warmgray hover:text-charcoal'
                 }`}
               >
@@ -686,6 +712,15 @@ export function RouteOptimizationSuggestion({ user }: RouteOptimizationSuggestio
               </button>
             </div>
 
+            {/* FULLSCREEN TOGGLE */}
+            <button
+              onClick={() => setIsFullscreen(prev => !prev)}
+              title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+              className="absolute top-4 right-4 z-30 p-2 bg-white/95 hover:bg-white rounded-xl backdrop-blur-md shadow-sm border border-[rgba(184,135,61,0.12)] text-charcoal transition-all"
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
+
             {mapMode === 'street' ? (
               <div className="absolute inset-0 w-full h-full z-0">
                 <MapContainer
@@ -698,6 +733,7 @@ export function RouteOptimizationSuggestion({ user }: RouteOptimizationSuggestio
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
+                  <MapResizeHandler trigger={isFullscreen} />
 
                   {/* Real route lines from top 3 candidates to the target task */}
                   {activeTask && eligibleCandidates.slice(0, 3).map((cand, idx) => {

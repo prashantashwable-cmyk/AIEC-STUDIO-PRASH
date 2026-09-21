@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
-  MapPin, Phone, MessageSquare, Plus, Minus, Layers, Users, Sparkles, 
-  Navigation, Signal, Battery, Compass, Check, CheckCircle2, RefreshCw, 
-  X, ExternalLink, HelpCircle, Eye, AlertTriangle, Hammer, Building, Map as MapIcon, Globe, Sliders
+  MapPin, Phone, MessageSquare, Plus, Minus, Layers, Users, Sparkles,
+  Navigation, Signal, Battery, Compass, Check, CheckCircle2, RefreshCw,
+  X, ExternalLink, HelpCircle, Eye, AlertTriangle, Hammer, Building, Map as MapIcon, Globe, Sliders,
+  Maximize2, Minimize2
 } from 'lucide-react';
 import { DbManager } from '../lib/db';
 import { User, Lead, Job } from '../types';
@@ -16,6 +17,17 @@ import {
   MapFilterState, 
   defaultFilters 
 } from './MapFiltersLayersControlPanel';
+
+// Leaflet caches its container size at init; toggling fullscreen resizes the container
+// via CSS without firing a window resize event, so we must tell the map explicitly.
+const MapResizeHandler: React.FC<{ trigger: unknown }> = ({ trigger }) => {
+  const map = useMap();
+  useEffect(() => {
+    const t = setTimeout(() => map.invalidateSize(), 120);
+    return () => clearTimeout(t);
+  }, [trigger, map]);
+  return null;
+};
 
 interface LiveStaff {
   id: string;
@@ -73,6 +85,17 @@ export const LiveMapDashboard: React.FC<{
   // Map Mode Control: 'street' uses free OpenStreetMap tiles (no key/billing needed),
   // 'vector' is the stylized in-house sandbox rendering.
   const [mapMode, setMapMode] = useState<'street' | 'vector'>('street');
+
+  // Fullscreen map view (CSS-based overlay, works even where the browser Fullscreen API is blocked, e.g. in an iframe)
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isFullscreen]);
 
   // Vector zoom & panning state (Pune center coordinate map space)
   const [zoom, setZoom] = useState(1);
@@ -616,8 +639,11 @@ export const LiveMapDashboard: React.FC<{
       <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[650px] relative">
         
         {/* MAP STAGE CONTAINER */}
-        <div className="flex-1 h-[500px] sm:h-[550px] lg:h-full rounded-2xl overflow-hidden border border-[rgba(184,135,61,0.2)] bg-white relative shadow-inner min-h-[400px] flex flex-col">
-          
+        <div className={isFullscreen
+          ? "fixed inset-0 z-[200] bg-white flex flex-col"
+          : "flex-1 h-[500px] sm:h-[550px] lg:h-full rounded-2xl overflow-hidden border border-[rgba(184,135,61,0.2)] bg-white relative shadow-inner min-h-[400px] flex flex-col"
+        }>
+
           {/* MAP MODE CHIP CONTROLLERS */}
           <div className="absolute top-4 left-4 z-10 flex gap-1 bg-white/90 p-1 rounded-xl backdrop-blur-md shadow-sm border border-[rgba(184,135,61,0.12)]">
             <button
@@ -643,6 +669,15 @@ export const LiveMapDashboard: React.FC<{
             </button>
           </div>
 
+          {/* FULLSCREEN TOGGLE */}
+          <button
+            onClick={() => setIsFullscreen(prev => !prev)}
+            title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+            className="absolute top-4 right-4 z-20 p-2 bg-white/90 hover:bg-white rounded-xl backdrop-blur-md shadow-sm border border-[rgba(184,135,61,0.12)] text-charcoal transition-all"
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+
           {/* =========================================================
               RENDER OPTION A: REAL STREET MAP (OpenStreetMap, free, no key)
               ========================================================= */}
@@ -658,6 +693,7 @@ export const LiveMapDashboard: React.FC<{
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+                <MapResizeHandler trigger={isFullscreen} />
 
                 {/* Operational territory zones as real geo-circles */}
                 {showTerritories && TERRITORIES.map(t => (

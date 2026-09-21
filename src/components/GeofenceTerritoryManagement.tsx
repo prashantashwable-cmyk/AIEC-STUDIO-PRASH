@@ -1,16 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapContainer, TileLayer, Marker, Polygon } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polygon, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
-  MapPin, Users, Layers, Plus, X, Check, Settings, AlertTriangle, 
-  Globe, Sparkles, Compass, Trash2, Edit3, Save, Award, Activity, 
-  Info, ArrowRight, ChevronRight, RefreshCw, UserCheck, Minimize2, CheckCircle2
+  MapPin, Users, Layers, Plus, X, Check, Settings, AlertTriangle,
+  Globe, Sparkles, Compass, Trash2, Edit3, Save, Award, Activity,
+  Info, ArrowRight, ChevronRight, RefreshCw, UserCheck, Minimize2, Maximize2, CheckCircle2
 } from 'lucide-react';
 import { DbManager } from '../lib/db';
 import { User, Territory, Lead } from '../types';
 import { Card, Button } from './Common';
+
+// Leaflet caches its container size at init; toggling fullscreen resizes the container
+// via CSS without firing a window resize event, so we must tell the map explicitly.
+const MapResizeHandler: React.FC<{ trigger: unknown }> = ({ trigger }) => {
+  const map = useMap();
+  useEffect(() => {
+    const t = setTimeout(() => map.invalidateSize(), 120);
+    return () => clearTimeout(t);
+  }, [trigger, map]);
+  return null;
+};
 
 export const GeofenceTerritoryManagement: React.FC<{
   user: User;
@@ -49,6 +60,17 @@ export const GeofenceTerritoryManagement: React.FC<{
 
   // Map settings: 'street' uses free OpenStreetMap tiles (no key/billing needed)
   const [mapMode, setMapMode] = useState<'street' | 'vector'>('street');
+
+  // Fullscreen map view (CSS-based overlay, works even where the browser Fullscreen API is blocked, e.g. in an iframe)
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isFullscreen]);
 
   // Vector map panning/zoom state (Pune coordinate space)
   const [zoom, setZoom] = useState(1);
@@ -502,8 +524,11 @@ export const GeofenceTerritoryManagement: React.FC<{
         {/* ==========================================
             LEFT COLUMN: INTERACTIVE MAP EDITOR
             ========================================== */}
-        <div className="flex-1 h-[500px] sm:h-[550px] lg:h-full rounded-2xl overflow-hidden border border-[rgba(184,135,61,0.2)] bg-white relative flex flex-col shadow-inner min-h-[400px]">
-          
+        <div className={isFullscreen
+          ? "fixed inset-0 z-[200] bg-white flex flex-col"
+          : "flex-1 h-[500px] sm:h-[550px] lg:h-full rounded-2xl overflow-hidden border border-[rgba(184,135,61,0.2)] bg-white relative flex flex-col shadow-inner min-h-[400px]"
+        }>
+
           {/* MAP MODE CONTROLLERS */}
           <div className="absolute top-4 left-4 z-10 flex gap-1 bg-white/95 p-1 rounded-xl backdrop-blur-md shadow-sm border border-[rgba(184,135,61,0.12)]">
             <button
@@ -524,6 +549,15 @@ export const GeofenceTerritoryManagement: React.FC<{
               Live Street Map
             </button>
           </div>
+
+          {/* FULLSCREEN TOGGLE */}
+          <button
+            onClick={() => setIsFullscreen(prev => !prev)}
+            title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+            className="absolute top-4 right-4 z-20 p-2 bg-white/95 hover:bg-white rounded-xl backdrop-blur-md shadow-sm border border-[rgba(184,135,61,0.12)] text-charcoal transition-all"
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
 
           {/* ZOOM / PANNERS CONTROLS */}
           <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1.5 bg-white p-1 rounded-xl shadow-md border border-[rgba(184,135,61,0.12)]">
@@ -553,6 +587,7 @@ export const GeofenceTerritoryManagement: React.FC<{
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+                <MapResizeHandler trigger={isFullscreen} />
 
                 {/* Territories rendered as real geo-polygons (an improvement over the old marker-only Google mode) */}
                 {territories.map(t => (

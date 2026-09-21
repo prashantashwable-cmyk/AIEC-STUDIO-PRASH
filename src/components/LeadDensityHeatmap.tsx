@@ -7,7 +7,8 @@ import 'leaflet.heat';
 import {
   Flame, MapPin, TrendingUp, TrendingDown, Info, Calendar, Layers,
   Globe, Sparkles, CheckCircle2, Search, Filter, Database, ArrowRight,
-  ChevronRight, RefreshCw, AlertCircle, Activity, LayoutDashboard
+  ChevronRight, RefreshCw, AlertCircle, Activity, LayoutDashboard,
+  Maximize2, Minimize2
 } from 'lucide-react';
 import { DbManager } from '../lib/db';
 import { User, Lead, Deal } from '../types';
@@ -23,6 +24,17 @@ const HeatLayer: React.FC<{ points: [number, number, number][] }> = ({ points })
       map.removeLayer(heatLayer);
     };
   }, [map, points]);
+  return null;
+};
+
+// Leaflet caches its container size at init; toggling fullscreen resizes the container
+// via CSS without firing a window resize event, so we must tell the map explicitly.
+const MapResizeHandler: React.FC<{ trigger: unknown }> = ({ trigger }) => {
+  const map = useMap();
+  useEffect(() => {
+    const t = setTimeout(() => map.invalidateSize(), 120);
+    return () => clearTimeout(t);
+  }, [trigger, map]);
   return null;
 };
 
@@ -63,6 +75,17 @@ export const LeadDensityHeatmap: React.FC<{
 
   // Map settings: 'street' uses free OpenStreetMap tiles (no key/billing needed)
   const [mapMode, setMapMode] = useState<'vector' | 'street'>('street');
+
+  // Fullscreen map view (CSS-based overlay, works even where the browser Fullscreen API is blocked, e.g. in an iframe)
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isFullscreen]);
 
   // Vector map panning/zoom state (Pune coordinate space)
   const [zoom, setZoom] = useState(1.1);
@@ -527,8 +550,20 @@ export const LeadDensityHeatmap: React.FC<{
         {/* ==========================================
             LEFT PANEL: THE MAP WITH HEAT OVERLAYS
             ========================================== */}
-        <div className="flex-1 h-[500px] sm:h-[550px] lg:h-full rounded-2xl overflow-hidden border border-[rgba(184,135,61,0.2)] bg-white relative flex flex-col shadow-inner min-h-[400px]">
-          
+        <div className={isFullscreen
+          ? "fixed inset-0 z-[200] bg-white flex flex-col"
+          : "flex-1 h-[500px] sm:h-[550px] lg:h-full rounded-2xl overflow-hidden border border-[rgba(184,135,61,0.2)] bg-white relative flex flex-col shadow-inner min-h-[400px]"
+        }>
+
+          {/* FULLSCREEN TOGGLE */}
+          <button
+            onClick={() => setIsFullscreen(prev => !prev)}
+            title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+            className="absolute bottom-20 left-4 z-10 p-2 bg-white/95 hover:bg-white rounded-xl backdrop-blur-md shadow-sm border border-[rgba(184,135,61,0.12)] text-charcoal transition-all"
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+
           {/* MAP MODE CONTROLLERS */}
           <div className="absolute top-4 left-4 z-10 flex gap-1 bg-white/95 p-1 rounded-xl backdrop-blur-md shadow-sm border border-[rgba(184,135,61,0.12)]">
             <button
@@ -603,6 +638,7 @@ export const LeadDensityHeatmap: React.FC<{
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+                <MapResizeHandler trigger={isFullscreen} />
 
                 {/* Real point-density heat layer (leaflet.heat) over actual lead coordinates */}
                 <HeatLayer points={heatPoints} />
