@@ -77,7 +77,6 @@ import {
 } from 'lucide-react';
 import { useLanguage, translations as appTranslations, Language } from './lib/language';
 import { useTheme } from './lib/theme';
-import { APIProvider } from '@vis.gl/react-google-maps';
 import { auth } from './lib/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { AdminRouter } from './routers/AdminRouter';
@@ -2229,13 +2228,7 @@ export default function App() {
 
                 {/* 3. SCROLLABLE SCREEN STAGE CONTENT AREA */}
                 <main className="flex-1 overflow-y-auto p-4 md:p-8 max-w-7xl mx-auto w-full pb-24 md:pb-8">
-                  {hasValidGoogleMapsKey ? (
-                    <APIProvider apiKey={googleMapsApiKey} version="weekly">
-                      {renderTabContent()}
-                    </APIProvider>
-                  ) : (
-                    renderTabContent()
-                  )}
+                  {renderTabContent()}
                 </main>
 
                 {/* 4. MOBILE BOTTOM TAB NAVIGATION */}

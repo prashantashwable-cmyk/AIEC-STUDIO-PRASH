@@ -1,13 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  APIProvider, 
-  Map, 
-  AdvancedMarker, 
-  InfoWindow,
-  useMap 
-} from '@vis.gl/react-google-maps';
-import { 
+import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import {
   MapPin, Phone, MessageSquare, Plus, Minus, Layers, Users, Sparkles, 
   Navigation, Signal, Battery, Compass, Check, CheckCircle2, RefreshCw, 
   X, ExternalLink, HelpCircle, Eye, AlertTriangle, Hammer, Building, Map as MapIcon, Globe, Sliders
@@ -20,13 +16,6 @@ import {
   MapFilterState, 
   defaultFilters 
 } from './MapFiltersLayersControlPanel';
-
-const API_KEY =
-  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-  (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
-  (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
-  '';
-const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
 
 interface LiveStaff {
   id: string;
@@ -56,11 +45,11 @@ const TERRITORIES = [
   { id: 't4', name: 'Pune West (Hinjewadi)', center: { lat: 18.5913, lng: 73.7389 }, radius: 4200, color: 'rgba(184, 135, 61, 0.12)', border: '#B8873D' }
 ];
 
-export const LiveMapDashboard: React.FC<{ 
+export const LiveMapDashboard: React.FC<{
   user: User;
   apiKey?: string;
   hasValidKey?: boolean;
-}> = ({ user, apiKey, hasValidKey }) => {
+}> = ({ user }) => {
   // Layer Toggles and Advanced Filters Configuration
   const [filters, setFilters] = useState<MapFilterState>(() => {
     const storedViews = localStorage.getItem('aiec_map_saved_views');
@@ -81,17 +70,9 @@ export const LiveMapDashboard: React.FC<{
   const showActiveInstallations = filters.showActiveInstallations;
   const showTerritories = filters.showTerritories;
 
-  // Map Mode Control (Force Google Maps as requested)
-  const [mapMode, setMapMode] = useState<'google' | 'vector'>(hasValidKey ? 'google' : 'vector');
-  const [showKeyInfo, setShowKeyInfo] = useState(false);
-
-  useEffect(() => {
-    if (hasValidKey) {
-      setMapMode('google');
-    } else {
-      setMapMode('vector');
-    }
-  }, [hasValidKey]);
+  // Map Mode Control: 'street' uses free OpenStreetMap tiles (no key/billing needed),
+  // 'vector' is the stylized in-house sandbox rendering.
+  const [mapMode, setMapMode] = useState<'street' | 'vector'>('street');
 
   // Vector zoom & panning state (Pune center coordinate map space)
   const [zoom, setZoom] = useState(1);
@@ -420,6 +401,69 @@ export const LiveMapDashboard: React.FC<{
   const clusters = getClusteredPins();
   const lostSignalCount = staffList.filter(s => s.status === 'lost_signal').length;
 
+  // Leaflet divIcon builders (real street map markers, styled to match the vector sandbox pins)
+  const clusterIcon = (count: number) => L.divIcon({
+    html: `
+      <div class="relative flex flex-col items-center">
+        <div class="w-10 h-10 rounded-full bg-royalemerald border-2 border-white flex items-center justify-center text-white font-mono text-xs font-black shadow-lg">${count}</div>
+        <div class="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-antiquegold flex items-center justify-center border border-white text-[9px] text-white font-bold">⚡</div>
+      </div>
+    `,
+    className: '',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+  });
+
+  const staffIcon = (staff: LiveStaff) => {
+    const markerColor = staff.role === 'surveyor' ? 'bg-[#0E4B3D]' : 'bg-[#B8873D]';
+    const badge = staff.status === 'lost_signal'
+      ? `<div class="absolute -top-1.5 -right-1.5 bg-[#B23B3B] text-white w-4 h-4 rounded-full border border-white flex items-center justify-center text-[8px] font-bold">🚫</div>`
+      : staff.status === 'traveling'
+      ? `<div class="absolute -bottom-1 -right-1 bg-royalemerald text-white w-4 h-4 rounded-full border border-white flex items-center justify-center text-[8px]">🚗</div>`
+      : '';
+    return L.divIcon({
+      html: `
+        <div class="relative flex flex-col items-center">
+          <div class="w-9 h-9 rounded-2xl ${markerColor} border-2 border-white p-0.5 shadow-md flex items-center justify-center relative">
+            <img src="${staff.avatar}" class="w-full h-full rounded-xl object-cover" />
+            ${badge}
+          </div>
+          <div class="mt-1.5 px-2 py-0.5 bg-white/95 border border-[rgba(184,135,61,0.15)] rounded-md text-[9px] font-bold text-charcoal shadow-sm flex items-center gap-1 whitespace-nowrap">
+            <span class="w-1.5 h-1.5 rounded-full ${staff.status === 'lost_signal' ? 'bg-[#B23B3B]' : 'bg-success'}"></span>
+            ${staff.name.split(' ')[0]}
+          </div>
+        </div>
+      `,
+      className: '',
+      iconSize: [40, 56],
+      iconAnchor: [20, 20],
+    });
+  };
+
+  const leadIcon = L.divIcon({
+    html: `
+      <div class="flex flex-col items-center">
+        <div class="w-7 h-7 rounded-xl bg-success/20 border-2 border-success flex items-center justify-center text-success shadow-md backdrop-blur-xs">🏢</div>
+        <div class="mt-1 px-1.5 py-0.5 bg-white/90 border border-success/30 rounded text-[8px] font-extrabold uppercase text-success tracking-wider shadow-sm whitespace-nowrap">Lead</div>
+      </div>
+    `,
+    className: '',
+    iconSize: [28, 44],
+    iconAnchor: [14, 14],
+  });
+
+  const jobIcon = L.divIcon({
+    html: `
+      <div class="flex flex-col items-center">
+        <div class="w-7 h-7 rounded-xl bg-antiquegold border-2 border-white flex items-center justify-center text-white shadow-md">🔨</div>
+        <div class="mt-1 px-1.5 py-0.5 bg-white/90 border border-antiquegold/30 rounded text-[8px] font-extrabold uppercase text-[#785115] tracking-wider shadow-sm whitespace-nowrap">SOP Hub</div>
+      </div>
+    `,
+    className: '',
+    iconSize: [28, 44],
+    iconAnchor: [14, 14],
+  });
+
   // Render HTML5 Interactive Vector Map of Pune
   // Coordinates mapping formula from (Lat, Lng) to (X, Y) percent positions on a 1000x1000 map space
   // Pune center is roughly 18.52, 73.85
@@ -579,198 +623,105 @@ export const LiveMapDashboard: React.FC<{
             <button
               onClick={() => setMapMode('vector')}
               className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest transition-all ${
-                mapMode === 'vector' 
-                  ? 'bg-[#B8873D] text-white' 
+                mapMode === 'vector'
+                  ? 'bg-[#B8873D] text-white'
                   : 'text-warmgray hover:text-charcoal'
               }`}
             >
               👑 Vector Sandbox
             </button>
             <button
-              onClick={() => {
-                if (!hasValidKey) {
-                  setShowKeyInfo(true);
-                } else {
-                  setMapMode('google');
-                }
-              }}
+              onClick={() => setMapMode('street')}
               className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest transition-all flex items-center gap-1.5 ${
-                mapMode === 'google' 
-                  ? 'bg-royalemerald text-white' 
+                mapMode === 'street'
+                  ? 'bg-royalemerald text-white'
                   : 'text-warmgray hover:text-charcoal'
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
-              Satellite Terrain
+              Live Street Map
             </button>
           </div>
 
-          {/* SATELLITE KEY DIALOG OVERLAY */}
-          {showKeyInfo && (
-            <div className="absolute inset-0 z-30 bg-[#F8F6F1]/95 flex flex-col items-center justify-center p-6 text-center text-charcoal animate-fadeIn">
-              <div className="max-w-md bg-white p-6 rounded-3xl border border-[rgba(184,135,61,0.22)] shadow-2xl space-y-4">
-                <div className="w-12 h-12 bg-[#B8873D]/10 text-[#B8873D] rounded-full flex items-center justify-center mx-auto">
-                  <Globe className="w-6 h-6 stroke-[1.5]" />
-                </div>
-                <h3 className="font-serif text-lg font-bold text-charcoal">Google Maps API Key Required</h3>
-                <p className="text-xs text-warmgray leading-relaxed">
-                  To stream real satellite photographs and precise geographic terrain, the application must be registered on Google Cloud Console.
-                </p>
-                <div className="bg-[#F8F6F1] p-3 rounded-xl text-left text-[11px] space-y-2 border border-[#e5dfd4] font-mono text-warmgray">
-                  <p className="font-bold text-charcoal flex items-center gap-1">
-                    <span>1.</span> <a href="https://console.cloud.google.com/google/maps-apis/start?utm_campaign=gmp-code-assist-ais" target="_blank" rel="noopener noreferrer" className="text-antiquegold underline">Create or Get an API Key</a>
-                  </p>
-                  <p className="font-bold text-charcoal">2. Enter in Settings Secrets:</p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li>Top-right gear icon ⚙️ → Secrets</li>
-                    <li>Key name: <code className="bg-white px-1 py-0.5 rounded border">GOOGLE_MAPS_PLATFORM_KEY</code></li>
-                    <li>Value: your real GCP map credential</li>
-                  </ul>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="secondary" className="flex-1 py-2" onClick={() => setShowKeyInfo(false)}>
-                    <span>Cancel</span>
-                  </Button>
-                  <Button variant="primary" className="flex-1 py-2" onClick={() => {
-                    setShowKeyInfo(false);
-                    setMapMode('vector'); // Stay in sandbox
-                  }}>
-                    <span>Simulated Mode</span>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* =========================================================
-              RENDER OPTION A: REAL GOOGLE MAPS INSTANCE
+              RENDER OPTION A: REAL STREET MAP (OpenStreetMap, free, no key)
               ========================================================= */}
-          {mapMode === 'google' ? (
+          {mapMode === 'street' ? (
             <div className="absolute inset-0 w-full h-full z-0">
-              {!apiKey ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#FAF9F5] space-y-4">
-                  <div className="w-8 h-8 border-4 border-royalemerald border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs text-warmgray font-medium tracking-wide">Initializing satellite terrain engine...</p>
-                </div>
-              ) : (
-                <Map
-                  defaultCenter={{ lat: mapCenterLat, lng: mapCenterLng }}
-                  defaultZoom={12}
-                  mapId="AIEC_HQ_LIVE_MAP"
-                  internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
-                  style={{ width: '100%', height: '100%' }}
-                >
-                  {/* Drawing territorial zones in Google Maps */}
-                  {showTerritories && TERRITORIES.map(t => (
-                    <React.Fragment key={t.id}>
-                      {/* AdvancedMarker or overlays can be set here. We render markers for active pins */}
-                    </React.Fragment>
-                  ))}
+              <MapContainer
+                center={[mapCenterLat, mapCenterLng]}
+                zoom={12}
+                style={{ width: '100%', height: '100%' }}
+                scrollWheelZoom={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
 
-                  {/* Render clustered pins */}
-                  {clusters.map(cluster => {
-                    const count = cluster.members.length;
-                    const isCluster = count > 1;
+                {/* Operational territory zones as real geo-circles */}
+                {showTerritories && TERRITORIES.map(t => (
+                  <Circle
+                    key={t.id}
+                    center={[t.center.lat, t.center.lng]}
+                    radius={t.radius}
+                    pathOptions={{ color: t.border, weight: 1.5, dashArray: '6 6', fillColor: t.border, fillOpacity: 0.08 }}
+                  />
+                ))}
 
-                    if (isCluster) {
-                      return (
-                        <AdvancedMarker
-                          key={`g-cluster-${cluster.key}`}
-                          position={{ lat: cluster.lat, lng: cluster.lng }}
-                          onClick={() => setSelectedPin({ type: 'cluster', data: cluster.members, id: cluster.key })}
-                        >
-                          <div className="relative cursor-pointer transition-all hover:scale-110">
-                            <div className="w-10 h-10 rounded-full bg-royalemerald border-2 border-white flex items-center justify-center text-white font-mono text-xs font-black shadow-lg">
-                              {count}
-                            </div>
-                            <div className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-antiquegold flex items-center justify-center border border-white text-[9px] text-white font-bold animate-pulse">
-                              ⚡
-                            </div>
-                          </div>
-                        </AdvancedMarker>
-                      );
-                    }
+                {/* Clustered staff / single-staff pins */}
+                {clusters.map(cluster => {
+                  const count = cluster.members.length;
+                  const isCluster = count > 1;
 
-                    const staff = cluster.members[0];
-                    const markerColor = staff.role === 'surveyor' ? 'bg-[#0E4B3D]' : 'bg-[#B8873D]';
-                    const glowAnim = staff.status === 'traveling' ? 'animate-pulse' : '';
-
+                  if (isCluster) {
                     return (
-                      <AdvancedMarker
-                        key={`g-staff-${staff.id}`}
-                        position={{ lat: staff.lat, lng: staff.lng }}
-                        onClick={() => setSelectedPin({ type: 'staff', data: staff, id: staff.id })}
-                      >
-                        <div className="relative flex flex-col items-center cursor-pointer transition-all hover:scale-115">
-                          {/* Pin Container */}
-                          <div className={`w-9 h-9 rounded-2xl ${markerColor} border-2 border-white p-0.5 shadow-md flex items-center justify-center relative`}>
-                            <img src={staff.avatar} alt={staff.name} className="w-full h-full rounded-xl object-cover" />
-                            
-                            {/* Battery alert icon or Offline icon */}
-                            {staff.status === 'lost_signal' && (
-                              <div className="absolute -top-1.5 -right-1.5 bg-[#B23B3B] text-white w-4 h-4 rounded-full border border-white flex items-center justify-center text-[8px] font-bold">
-                                🚫
-                              </div>
-                            )}
-                            {staff.status === 'traveling' && (
-                              <div className="absolute -bottom-1 -right-1 bg-royalemerald text-white w-4 h-4 rounded-full border border-white flex items-center justify-center text-[8px]">
-                                🚗
-                              </div>
-                            )}
-                          </div>
-                          {/* Speech bubble style label */}
-                          <div className="mt-1.5 px-2 py-0.5 bg-white/95 border border-[rgba(184,135,61,0.15)] rounded-md text-[9px] font-bold text-charcoal shadow-sm flex items-center gap-1">
-                            <span className={`w-1.5 h-1.5 rounded-full ${staff.status === 'lost_signal' ? 'bg-[#B23B3B]' : 'bg-success'}`} />
-                            {staff.name.split(' ')[0]}
-                          </div>
-                        </div>
-                      </AdvancedMarker>
+                      <Marker
+                        key={`s-cluster-${cluster.key}`}
+                        position={[cluster.lat, cluster.lng]}
+                        icon={clusterIcon(count)}
+                        eventHandlers={{ click: () => setSelectedPin({ type: 'cluster', data: cluster.members, id: cluster.key }) }}
+                      />
                     );
-                  })}
+                  }
 
-                  {/* Active leads shown as pins */}
-                  {showActiveLeads && activeLeadsPins.map(lead => (
-                    <AdvancedMarker
-                      key={`g-lead-${lead.id}`}
-                      position={{ lat: lead.buildingInfo.latitude || 18.52, lng: lead.buildingInfo.longitude || 73.85 }}
-                      onClick={() => setSelectedPin({ type: 'lead', data: lead, id: lead.id })}
-                    >
-                      <div className="flex flex-col items-center cursor-pointer hover:scale-110 transition-all">
-                        <div className="w-7 h-7 rounded-xl bg-success/20 border-2 border-success flex items-center justify-center text-success shadow-md backdrop-blur-xs">
-                          <Building className="w-3.5 h-3.5" />
-                        </div>
-                        <div className="mt-1 px-1.5 py-0.5 bg-white/90 border border-success/30 rounded text-[8px] font-extrabold uppercase text-success tracking-wider shadow-sm">
-                          Lead
-                        </div>
-                      </div>
-                    </AdvancedMarker>
-                  ))}
+                  const staff = cluster.members[0];
+                  return (
+                    <Marker
+                      key={`s-staff-${staff.id}`}
+                      position={[staff.lat, staff.lng]}
+                      icon={staffIcon(staff)}
+                      eventHandlers={{ click: () => setSelectedPin({ type: 'staff', data: staff, id: staff.id }) }}
+                    />
+                  );
+                })}
 
-                  {/* Active jobs shown as pins */}
-                  {showActiveInstallations && activeJobsPins.map(job => {
-                    const lead = leads.find(l => l.id === job.dealId || l.id === 'lead_1'); // Map fallback
-                    const lat = lead?.buildingInfo.latitude || 18.51;
-                    const lng = lead?.buildingInfo.longitude || 73.81;
+                {/* Active leads shown as pins */}
+                {showActiveLeads && activeLeadsPins.map(lead => (
+                  <Marker
+                    key={`s-lead-${lead.id}`}
+                    position={[lead.buildingInfo.latitude || 18.52, lead.buildingInfo.longitude || 73.85]}
+                    icon={leadIcon}
+                    eventHandlers={{ click: () => setSelectedPin({ type: 'lead', data: lead, id: lead.id }) }}
+                  />
+                ))}
 
-                    return (
-                      <AdvancedMarker
-                        key={`g-job-${job.id}`}
-                        position={{ lat, lng }}
-                        onClick={() => setSelectedPin({ type: 'job', data: { job, lead }, id: job.id })}
-                      >
-                        <div className="flex flex-col items-center cursor-pointer hover:scale-110 transition-all">
-                          <div className="w-7 h-7 rounded-xl bg-antiquegold border-2 border-white flex items-center justify-center text-white shadow-md">
-                            <Hammer className="w-3.5 h-3.5" />
-                          </div>
-                          <div className="mt-1 px-1.5 py-0.5 bg-white/90 border border-antiquegold/30 rounded text-[8px] font-extrabold uppercase text-white tracking-wider shadow-sm">
-                            SOP Hub
-                          </div>
-                        </div>
-                      </AdvancedMarker>
-                    );
-                  })}
-                </Map>
-              )}
+                {/* Active jobs shown as pins */}
+                {showActiveInstallations && activeJobsPins.map(job => {
+                  const lead = leads.find(l => l.id === job.dealId || l.id === 'lead_1'); // Map fallback
+                  const lat = lead?.buildingInfo.latitude || 18.51;
+                  const lng = lead?.buildingInfo.longitude || 73.81;
+
+                  return (
+                    <Marker
+                      key={`s-job-${job.id}`}
+                      position={[lat, lng]}
+                      icon={jobIcon}
+                      eventHandlers={{ click: () => setSelectedPin({ type: 'job', data: { job, lead }, id: job.id }) }}
+                    />
+                  );
+                })}
+              </MapContainer>
             </div>
           ) : (
             

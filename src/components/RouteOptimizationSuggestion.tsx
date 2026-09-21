@@ -5,20 +5,11 @@ import {
   ArrowRight, Sparkles, Plus, Clock, Search, Filter, Shield, Info, Settings,
   AlertCircle, RefreshCw, Star, Battery, HelpCircle
 } from 'lucide-react';
-import { 
-  APIProvider, 
-  Map, 
-  AdvancedMarker 
-} from '@vis.gl/react-google-maps';
+import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { DbManager } from '../lib/db';
 import { User as UserType, Lead, Job } from '../types';
-
-const API_KEY =
-  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-  (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
-  (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
-  '';
-const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
 
 interface RouteOptimizationSuggestionProps {
   user: UserType;
@@ -56,7 +47,7 @@ interface Candidate {
   battery: number;
 }
 
-export function RouteOptimizationSuggestion({ user, apiKey, hasValidKey }: RouteOptimizationSuggestionProps) {
+export function RouteOptimizationSuggestion({ user }: RouteOptimizationSuggestionProps) {
   // 1. Dispatch State
   const [tasks, setTasks] = useState<DispatchTask[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -69,17 +60,8 @@ export function RouteOptimizationSuggestion({ user, apiKey, hasValidKey }: Route
   const [taskSearch, setTaskSearch] = useState('');
   const [taskTypeFilter, setTaskTypeFilter] = useState<'all' | 'lead_survey' | 'installation_job'>('all');
 
-  // Map settings (Default to google)
-  const [mapMode, setMapMode] = useState<'google' | 'vector'>(hasValidKey ? 'google' : 'vector');
-  const [showKeyInfo, setShowKeyInfo] = useState(false);
-
-  useEffect(() => {
-    if (hasValidKey) {
-      setMapMode('google');
-    } else {
-      setMapMode('vector');
-    }
-  }, [hasValidKey]);
+  // Map settings: 'street' uses free OpenStreetMap tiles (no key/billing needed)
+  const [mapMode, setMapMode] = useState<'street' | 'vector'>('street');
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
@@ -468,6 +450,36 @@ export function RouteOptimizationSuggestion({ user, apiKey, hasValidKey }: Route
     return matchesSearch && matchesType;
   });
 
+  // Leaflet divIcon builders (real street map markers, styled to match the vector sandbox pins)
+  const targetIcon = (taskId: string) => L.divIcon({
+    html: `
+      <div class="relative flex flex-col items-center">
+        <div class="w-8 h-8 rounded-full bg-[#B8873D] border-2 border-white flex items-center justify-center text-white shadow-md">📍</div>
+        <div class="mt-1 bg-charcoal text-white text-[9px] font-bold px-2 py-0.5 rounded whitespace-nowrap shadow-xs">TARGET: ${taskId.toUpperCase()}</div>
+      </div>
+    `,
+    className: '',
+    iconSize: [32, 48],
+    iconAnchor: [16, 16],
+  });
+
+  const candidateIcon = (name: string, rank: number, distance: number, isTopMatch: boolean) => L.divIcon({
+    html: `
+      <div class="relative flex flex-col items-center">
+        <div class="w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-xs ${isTopMatch ? 'bg-[#0E4B3D] border-[#B8873D]' : 'bg-white border-[#e5dfd4]'}">
+          <span class="${isTopMatch ? 'text-white' : 'text-charcoal'}" style="font-size:12px;">👤</span>
+        </div>
+        <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[8px] font-bold text-white flex items-center justify-center ${isTopMatch ? 'bg-[#B8873D]' : 'bg-warmgray'}">${rank}</span>
+        <div class="mt-1 px-1.5 py-0.5 bg-white border border-[#e5dfd4] rounded-md text-[9px] font-bold text-charcoal shadow-sm flex items-center gap-1 whitespace-nowrap">
+          <span class="w-1.5 h-1.5 rounded-full bg-success"></span>${name.split(' ')[0]} (${distance}km)
+        </div>
+      </div>
+    `,
+    className: '',
+    iconSize: [28, 44],
+    iconAnchor: [14, 14],
+  });
+
   return (
     <div className="space-y-6">
       
@@ -663,124 +675,59 @@ export function RouteOptimizationSuggestion({ user, apiKey, hasValidKey }: Route
                 👑 Vector Sandbox
               </button>
               <button
-                onClick={() => {
-                  if (!hasValidKey) {
-                    setShowKeyInfo(true);
-                  } else {
-                    setMapMode('google');
-                  }
-                }}
+                onClick={() => setMapMode('street')}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest transition-all flex items-center gap-1 ${
-                  mapMode === 'google' 
-                    ? 'bg-royalemerald text-white font-bold' 
+                  mapMode === 'street'
+                    ? 'bg-royalemerald text-white font-bold'
                     : 'text-warmgray hover:text-charcoal'
                 }`}
               >
-                <span>🛰️ Live Satellite (Google Maps)</span>
-                {!hasValidKey && <span className="text-[8px] bg-red-100 text-red-600 px-1 py-0.25 rounded font-black">API KEY REQUIRED</span>}
+                <span>🌍 Live Street Map</span>
               </button>
             </div>
 
-            {/* KEY SETTING MODAL POPUP IF DEMANDED SATELLITE MAP WITHOUT KEY */}
-            {showKeyInfo && (
-              <div className="absolute inset-0 z-40 bg-charcoal/80 backdrop-blur-md flex items-center justify-center p-6 transition-all duration-300">
-                <div className="bg-[#FAF9F5] border border-antiquegold/40 p-5 rounded-2xl max-w-sm text-left shadow-2xl relative space-y-4">
-                  <div className="flex gap-2 text-[#B8873D]">
-                    <HelpCircle className="w-5 h-5 shrink-0" />
-                    <h3 className="font-serif font-bold text-sm text-charcoal">GCP Maps API Key Setup</h3>
-                  </div>
-                  <div className="text-[11px] leading-relaxed text-charcoal/80 space-y-2">
-                    <p>To use live satellite mapping and professional geofencing layers here:</p>
-                    <p className="font-bold text-charcoal">1. Provision or obtain a Maps API Key.</p>
-                    <p className="font-bold text-charcoal">2. Enter in Settings Secrets:</p>
-                    <ul className="list-disc pl-4 space-y-1">
-                      <li>Top-right gear icon ⚙️ → Secrets</li>
-                      <li>Key name: <code className="bg-white px-1 py-0.5 rounded border">GOOGLE_MAPS_PLATFORM_KEY</code></li>
-                      <li>Value: your real GCP map credential</li>
-                    </ul>
-                  </div>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => setShowKeyInfo(false)} 
-                      className="flex-1 py-2 bg-warmgray/10 hover:bg-warmgray/20 text-charcoal font-bold text-xs rounded-xl border border-warmgray/25 transition-all text-center cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setShowKeyInfo(false);
-                        setMapMode('vector');
-                      }} 
-                      className="flex-1 py-2 bg-[#B8873D] hover:bg-[#a6742d] text-white font-bold text-xs rounded-xl shadow-md transition-all text-center cursor-pointer"
-                    >
-                      Simulated Mode
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {mapMode === 'google' ? (
+            {mapMode === 'street' ? (
               <div className="absolute inset-0 w-full h-full z-0">
-                {!apiKey ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#FAF9F5] space-y-4">
-                    <div className="w-8 h-8 border-4 border-royalemerald border-t-transparent rounded-full animate-spin" />
-                    <p className="text-xs text-warmgray font-medium tracking-wide">Initializing satellite terrain engine...</p>
-                  </div>
-                ) : (
-                  <Map
-                    defaultCenter={{ lat: mapCenterLat, lng: mapCenterLng }}
-                    defaultZoom={12}
-                    mapId="AIEC_ROUTE_OPTIMIZATION_MAP"
-                    internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
-                    style={{ width: '100%', height: '100%' }}
-                  >
+                <MapContainer
+                  center={[mapCenterLat, mapCenterLng]}
+                  zoom={12}
+                  style={{ width: '100%', height: '100%' }}
+                  scrollWheelZoom={true}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+
+                  {/* Real route lines from top 3 candidates to the target task */}
+                  {activeTask && eligibleCandidates.slice(0, 3).map((cand, idx) => {
+                    const strokeColor = idx === 0 ? '#B8873D' : idx === 1 ? '#0E4B3D' : '#B23B3B';
+                    return (
+                      <Polyline
+                        key={`route-${cand.id}`}
+                        positions={[[cand.lat, cand.lng], [activeTask.lat, activeTask.lng]]}
+                        pathOptions={{ color: strokeColor, weight: 2, dashArray: '4 4' }}
+                      />
+                    );
+                  })}
+
                   {/* Active Task Location Pin */}
                   {activeTask && (
-                    <AdvancedMarker
-                      position={{ lat: activeTask.lat, lng: activeTask.lng }}
-                    >
-                      <div className="relative">
-                        <span className="absolute -inset-2 bg-amber-500/30 rounded-full animate-ping" />
-                        <div className="w-8 h-8 rounded-full bg-[#B8873D] border-2 border-white flex items-center justify-center text-white shadow-md">
-                          <MapPin className="w-4 h-4" />
-                        </div>
-                        <div className="absolute top-9 left-1/2 -translate-x-1/2 bg-charcoal text-white text-[9px] font-bold px-2 py-0.5 rounded whitespace-nowrap shadow-xs pointer-events-none">
-                          TARGET: {activeTask.id.toUpperCase()}
-                        </div>
-                      </div>
-                    </AdvancedMarker>
+                    <Marker
+                      position={[activeTask.lat, activeTask.lng]}
+                      icon={targetIcon(activeTask.id)}
+                    />
                   )}
 
                   {/* Eligible Candidate Pins */}
-                  {eligibleCandidates.map((cand, idx) => {
-                    const isTopMatch = idx === 0;
-                    return (
-                      <AdvancedMarker
-                        key={`g-pin-${cand.id}`}
-                        position={{ lat: cand.lat, lng: cand.lng }}
-                      >
-                        <div className="relative flex flex-col items-center">
-                          <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-xs ${
-                            isTopMatch ? 'bg-[#0E4B3D] border-[#B8873D]' : 'bg-white border-[#e5dfd4]'
-                          }`}>
-                            <User className={`w-3.5 h-3.5 ${isTopMatch ? 'text-white' : 'text-charcoal'}`} />
-                          </div>
-                          <span className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-[8px] font-bold text-white flex items-center justify-center ${
-                            isTopMatch ? 'bg-[#B8873D]' : 'bg-warmgray'
-                          }`}>
-                            {idx + 1}
-                          </span>
-                          <div className="mt-1 px-1.5 py-0.5 bg-white border border-[#e5dfd4] rounded-md text-[9px] font-bold text-charcoal shadow-sm flex items-center gap-1 whitespace-nowrap">
-                            <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                            {cand.name.split(' ')[0]} ({cand.distance}km)
-                          </div>
-                        </div>
-                      </AdvancedMarker>
-                    );
-                  })}
-                </Map>
-                )}
+                  {eligibleCandidates.map((cand, idx) => (
+                    <Marker
+                      key={`s-pin-${cand.id}`}
+                      position={[cand.lat, cand.lng]}
+                      icon={candidateIcon(cand.name, idx + 1, cand.distance, idx === 0)}
+                    />
+                  ))}
+                </MapContainer>
               </div>
             ) : (
               /* Base interactive vector map layer */
