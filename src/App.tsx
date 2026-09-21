@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, UserRole, UserStatus } from './types';
 import { DbManager } from './lib/db';
+import { getOrCreateFirestoreUser, updateFirestoreUser } from './lib/firestoreUsers';
 import { Button } from './components/Common';
 import { RoleSelectionWizard } from './components/RoleSelectionWizard';
 import { SurveyorOnboarding } from './components/SurveyorOnboarding';
@@ -537,36 +538,21 @@ export default function App() {
         throw new Error('No user credentials returned from Google Sign-In.');
       }
 
-      const email = firebaseUser.email?.toLowerCase() || '';
-      const list = DbManager.getUsers();
-      
-      // Look for user with this email
-      let found = list.find(u => u.email?.toLowerCase() === email);
-      
-      // Auto-map Prashant Wable (Owner/Founder email) to the pre-seeded admin profile
-      if (!found && email === 'prashantashwable@gmail.com') {
-        found = list.find(u => u.id === 'admin_prashant');
-        if (found) {
-          found = { ...found, email };
-          DbManager.updateUser(found);
-        }
+      // Real sign-ins resolve their identity against Firestore (users/{uid}), not the
+      // local demo array, so the account and its role survive a refresh or new session.
+      const found = await getOrCreateFirestoreUser(firebaseUser);
+
+      // Mirror into the local array too, so this session's admin/staff views
+      // (which still read DbManager.getUsers()) can see this real user.
+      const mirroredUser: User = { ...found, isDemo: false };
+      const localList = DbManager.getUsers();
+      if (!localList.find(u => u.id === mirroredUser.id)) {
+        DbManager.addUser(mirroredUser);
+      } else {
+        DbManager.updateUser(mirroredUser);
       }
 
-      // If they are not found in the list, create a new user with pending selection role (Step 1-2 onboarding)
-      if (!found) {
-        found = {
-          id: `google_${firebaseUser.uid}`,
-          role: 'pending_selection' as any,
-          name: firebaseUser.displayName || 'Google User',
-          phone: firebaseUser.phoneNumber || '',
-          email: email,
-          status: 'pending',
-          avatarUrl: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-        };
-        DbManager.addUser(found);
-      }
-
-      setCurrentUser({ ...found, isDemo: false });
+      setCurrentUser(mirroredUser);
       if (rememberMe) {
         localStorage.setItem('aiec_session_token', `session_${found.id}`);
         localStorage.setItem('aiec_last_role_used', found.role);

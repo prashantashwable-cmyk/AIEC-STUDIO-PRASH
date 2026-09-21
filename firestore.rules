@@ -36,6 +36,20 @@ service cloud.firestore {
       allow write: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
     }
 
+    // 1b. Leads (sales pipeline captured by surveyors, managed by admins)
+    match /leads/{leadId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.surveyorId == request.auth.uid
+      );
+      allow create: if isAuthenticated() && (isAdmin() || isSurveyor());
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.surveyorId == request.auth.uid
+      );
+      allow delete: if isAdmin();
+    }
+
     // 2. Elevator Contracts
     // Customers can ONLY read their own elevator contracts; Admins have full access.
     match /contracts/{contractId} {

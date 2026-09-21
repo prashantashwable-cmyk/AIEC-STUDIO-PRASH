@@ -1,3 +1,4 @@
+import { updateFirestoreUser } from './firestoreUsers';
 import { User, Lead, Deal, Job, Payment, Supplier, PurchaseOrder, POLineItem, UserRole, Territory, SiteVisit, EmergencyAlert, ReminderRule, LoanApplication, LoanPartner, Invoice, EscalationItem, DisputeItem, AutoPoTriggerRule, ProductionStatusRecord, SupplierScorecardDetail, OrderRatingEntry, SupplierContractSlaRecord, SupplierCommunicationThread, SupplierChatMessage, SupplierPaymentTermsConfig, DeliverySchedule, LiveShipmentTracker, ShipmentTrackingLeg, SiteReadinessChecklist, SiteDeliveryChecklist, SiteDeliveryChecklistItem, DiscrepancyReport, MaterialReceivedConfirmation, ConfirmingParty, DeliveryDelayAlert, StockInTransitItem, DeliverySopTemplate, DamagedMissingPartsReport, DeliveryPartner, RateCardEntry, DeliveryAnalyticsSummary, SupplierPaymentRecord, PaymentMilestoneItem, PaymentOverrideRecord, SupplierInvoiceDoc, SupplierInvoiceLineItem, ThreeWayMatchResult, ScheduledPaymentEntry, PaymentHistoryRecord, TaxGstComplianceRecord, SupplierGstinStatusRecord, SupplierDisputeRecord, DisputeAuditEntry, AdvanceExposureRecord, RetentionHoldRecord, SupplierPaymentAnalyticsRecord, ReconciliationRunRecord, TechnicianJob, TechnicianProfileSummary, InstallationSopStep, InstallationEvidenceItem, TechnicianCheckInRecord, SafetyComplianceItem, TechnicianIssueReport, MaterialUsageLogItem, ReworkAssignmentRecord, FinalHandoverChecklistRecord, CustomerHandoverWalkthroughRecord, WarrantyAmcRegistrationRecord, HandoverCompletionCertificateRecord, QcInspectorAssignmentRecord, QcMechanicalCheckItem, QcMechanicalReport, QcElectricalSafetyCheckItem, QcElectricalReport, ComplianceCertificateRecord, DefectSnagRecord, RecruitmentApplicantRecord, OfferAgreementRecord, PartnerTierAssignmentRecord, MasterPartnerDirectoryRecord, PartnerDeactivationExitRecord, TrainingModule, TrainingLesson, PartnerModuleProgress, PartnerLessonProgress, SopDocument, CertificationAssessment, AssessmentAttemptResult, CertificationBadge, PartnerBadgeRecord, TrainingModuleFeedback, TrainingFeedbackSummary, CommissionRule, CommissionRuleVersionHistory, CommissionPayoutEntry, CommissionPayoutSummary, AutomatedDisbursementRecord, CompetitionContest, LeaderboardEntry, UnifiedBadgeMilestone, PayoutStatementSummary, SkillCapabilityCategory, TechnicianSkillMatrixRow, PartnerComplianceRecord, ComplianceTrendMetric, SopRolloutNotification, PartnerRolloutAcknowledgment, TdsStatementRecord, PayoutDisputeRecord, CustomerProjectSummary, CustomerVaultDocument, CustomerPaymentInstallment, CustomerSupportTicket, CustomerSupportChatMessage, CustomerSupportChatThread, CustomerFeedbackEntry, CustomerAmcBooking, CustomerReferralEntry, CustomerInAppNotification, CustomerNotificationPreferences, AutomationRuleCategorySummary, AutomationRuleActivityLog, CustomWorkflowTriggerRule, InternalNotificationTemplate, EscalationChainConfig, SlaProcessItem, SlaCategoryTrend, TechnicalIncidentLog, IntegrationTechnicalHealth, AutomatedActionAuditEntry, ManualOverrideLogEntry, ApiIntegrationConfig, AutomationTestScenario, CompanyProfileConfig, BrandVersionRecord, RolePermissionConfig, UserPermissionOverride, PermissionChangeAuditEntry, MonitorSignalConfig, DailyMonitorCheckLog, BackupMonitorContact, DataSubjectConsentRecord, DataSubjectRequest, DataRetentionCategoryConfig, PrivacyPolicyVersionRecord, RoleTwoFactorPolicy, ActiveUserSession, SecurityEventLog, PasswordPolicyConfig, DatabaseBackupRunRecord, DataExportJobRecord, DisasterRestorePointInfo, SaaSUsageServiceConfig, SaaSBillingInvoiceRecord, LegalContractTemplateRecord, StateLiftActClauseItem, LegalReviewAuditLog } from '../types';
 
 
@@ -1261,11 +1262,19 @@ export class DbManager {
   static updateUser(user: User): void {
     const list = this.getUsers().map(u => u.id === user.id ? user : u);
     this.setStore('users', list);
+    // Real (non-demo) users also persist to Firestore, so their profile/role
+    // survives a refresh or a new session — demo sessions never touch it.
+    if (!user.isDemo) {
+      updateFirestoreUser(user).catch(err => console.error('Firestore user sync failed:', err));
+    }
   }
 
   static addUser(user: User): void {
     const list = [...this.getUsers(), user];
     this.setStore('users', list);
+    if (!user.isDemo) {
+      updateFirestoreUser(user).catch(err => console.error('Firestore user sync failed:', err));
+    }
   }
 
   // Leads API
